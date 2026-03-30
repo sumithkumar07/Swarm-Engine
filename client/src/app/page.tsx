@@ -3,226 +3,198 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Terminal, Shield, Cpu, Globe, Activity, 
-  Layout, Zap, Database, Layers, Network,
-  ChevronRight, BrainCircuit, Fingerprint
+  Zap, Database, Layers, Network,
+  ChevronRight, BrainCircuit, Fingerprint,
+  Play, CheckCircle2, AlertCircle, RefreshCw
 } from 'lucide-react';
 import InteractionFeed from '@/components/InteractionFeed';
 
 export default function Home() {
-  const [protocolStage, setProtocolStage] = useState(2); // 0: Boot, 1: Sync, 2: Swarm, 3: Analysis
+  const [protocolStage, setProtocolStage] = useState(0); // 0-4
+  const [booting, setBooting] = useState(false);
+
+  const startBoot = () => {
+    setBooting(true);
+    setTimeout(() => {
+      setProtocolStage(1);
+      setBooting(false);
+    }, 2000);
+  };
+
+  const steps = [
+    { name: 'Protocol Initialization', desc: 'Secure boot sequence' },
+    { name: 'Cloud Sync', desc: 'Hugging Face Handshake' },
+    { name: 'Swarm Allocation', desc: 'Node assignment' },
+    { name: 'Active Manifold', desc: 'Neural interaction' },
+    { name: 'Analysis', desc: 'Manifold diagnostics' }
+  ];
 
   return (
-    <main className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="flex flex-col h-full">
       
-      {/* 1. TOP PROTOCOL NAVIGATION (MiroFish Style) */}
-      <nav className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#020203]/80 backdrop-blur-2xl z-50">
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-3">
-             <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                <BrainCircuit className="w-5 h-5 text-blue-400" />
-             </div>
-             <div>
-                <h1 className="text-sm font-bold tracking-[0.2em] uppercase text-white">Sovereign <span className="text-blue-500">Titan</span></h1>
-                <p className="text-[9px] text-zinc-500 font-mono tracking-tighter uppercase font-bold">1.5M Param / Node</p>
-             </div>
-          </div>
-
-          <div className="hidden lg:flex items-center space-x-2 ml-8">
-            {['Protocol Boot', 'HF-Neural Sync', 'Sovereign Swarm', 'Manifold Analysis'].map((step, i) => (
-              <React.Fragment key={step}>
-                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-500 ${
-                  i <= protocolStage ? 'text-blue-400 bg-blue-500/10' : 'text-zinc-600'
-                }`}>
-                  <span className={`w-1 h-1 rounded-full ${i <= protocolStage ? 'bg-blue-400 shadow-[0_0_5px_#3b82f6]' : 'bg-zinc-700'}`} />
-                  <span>{step}</span>
-                </div>
-                {i < 3 && <ChevronRight className="w-3 h-3 text-zinc-800" />}
-              </React.Fragment>
-            ))}
-          </div>
+      {/* 1. TOP HEADER - MiroFish Style Breadcrumbs */}
+      <header className="h-20 bg-white border-b border-[var(--ws-border)] flex items-center justify-between px-10 sticky top-0 z-40">
+        <div className="flex items-center space-x-4">
+           {steps.map((step, i) => (
+             <React.Fragment key={step.name}>
+               <div className={`flex items-center space-x-3 transition-opacity duration-300 ${i <= protocolStage ? 'opacity-100' : 'opacity-30'}`}>
+                  <div className={`step-node ${
+                    i < protocolStage ? 'bg-[var(--miro-blue)] border-[var(--miro-blue)] text-white' : 
+                    i === protocolStage ? 'border-[var(--miro-blue)] text-[var(--miro-blue)] animate-step' : 
+                    'border-slate-300 text-slate-400'
+                  }`}>
+                    {i < protocolStage ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
+                  </div>
+                  <div className="hidden xl:block">
+                     <p className="text-[12px] font-bold text-slate-800 leading-none mb-1">{step.name}</p>
+                     <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{step.desc}</p>
+                  </div>
+               </div>
+               {i < steps.length - 1 && <ChevronRight className="w-4 h-4 text-slate-200 mx-2" />}
+             </React.Fragment>
+           ))}
         </div>
 
-        <div className="flex items-center space-x-6">
-           <div className="flex items-center space-x-2 text-[10px] font-bold text-emerald-500/80 bg-emerald-500/5 px-3 py-1.5 rounded-lg border border-emerald-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="tracking-widest">LOCALLAB.SBS / LIVE</span>
+        <div className="flex items-center space-x-4">
+           <div className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg flex items-center space-x-3">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">Protocol Active</span>
            </div>
+           <button className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+              <RefreshCw className="w-4 h-4" />
+           </button>
         </div>
-      </nav>
+      </header>
 
-      {/* 2. THE 3-PANEL COMMAND CONSOLE */}
-      <div className="flex-1 grid grid-cols-12 gap-6 p-6 z-10 max-w-[1800px] mx-auto w-full">
+      {/* 2. MAIN WORKSPACE AREA */}
+      <div className="flex-1 p-8 space-y-8 max-w-[1600px] mx-auto w-full">
         
-        {/* PANEL 1: SWARM TOPOLOGY (Left) */}
-        <div className="col-span-12 lg:col-span-3 space-y-6">
-          <div className="titan-card h-[400px] flex flex-col p-6">
-            <div className="glint-overlay" />
-            <div className="flex items-center justify-between mb-8">
-              <div className="space-y-1">
-                <h3 className="text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em]">Swarm Topology</h3>
-                <p className="text-xs text-white/50 font-medium">4 Active Titan Nodes</p>
-              </div>
-              <Network className="w-4 h-4 text-blue-500" />
-            </div>
-
-            {/* SVG Topology Visualizer */}
-            <div className="flex-1 relative flex items-center justify-center">
-               <svg className="w-full h-full" viewBox="0 0 200 200">
-                  {/* Neural Grid Lines */}
-                  <circle cx="100" cy="100" r="40" fill="none" stroke="rgba(59,130,246,0.1)" strokeWidth="1" strokeDasharray="4" />
-                  <circle cx="100" cy="100" r="70" fill="none" stroke="rgba(59,130,246,0.05)" strokeWidth="1" />
-                  
-                  {/* Connections */}
-                  <line x1="100" y1="50" x2="100" y2="150" stroke="rgba(59,130,246,0.1)" strokeWidth="0.5" />
-                  <line x1="50" y1="100" x2="150" y2="100" stroke="rgba(59,130,246,0.1)" strokeWidth="0.5" />
-
-                  {/* Nodes */}
-                  {[
-                    { id: 'Alpha', x: 100, y: 40 },
-                    { id: 'Beta', x: 160, y: 100 },
-                    { id: 'Delta', x: 100, y: 160 },
-                    { id: 'Gamma', x: 40, y: 100 }
-                  ].map((node) => (
-                    <g key={node.id} className="cursor-pointer group">
-                      <circle 
-                        cx={node.x} cy={node.y} r="8" 
-                        className="fill-blue-500/20 stroke-blue-500/50 group-hover:fill-blue-500/40 group-hover:stroke-blue-400 transition-all duration-300"
-                        strokeWidth="1"
-                      />
-                      <circle cx={node.x} cy={node.y} r="12" className="fill-blue-500/5 animate-pulse" />
-                      <text x={node.x} y={node.y - 12} textAnchor="middle" className="text-[8px] fill-zinc-500 font-bold uppercase tracking-tighter">{node.id}</text>
-                    </g>
-                  ))}
-               </svg>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-               <div>
-                  <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">Load</p>
-                  <p className="text-xs text-blue-400 data-text">12.4%</p>
-               </div>
-               <div>
-                  <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">Stability</p>
-                  <p className="text-xs text-emerald-400 data-text">LOCKED</p>
-               </div>
-            </div>
+        {/* BOOT STAGE (Step 0) */}
+        {protocolStage === 0 && (
+          <div className="miro-card p-20 flex flex-col items-center justify-center text-center space-y-6">
+             <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center text-[var(--miro-blue)]">
+                <BrainCircuit className="w-10 h-10" />
+             </div>
+             <div className="max-w-md">
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">Initialize Titan Protocol</h2>
+                <p className="text-slate-500 text-sm">Synchronizing local neural weights (1,532,472 parameters) with the global Sovereign manifold.</p>
+             </div>
+             <button 
+                onClick={startBoot}
+                disabled={booting}
+                className="px-8 py-3 bg-[var(--miro-blue)] hover:bg-[var(--miro-blue-hover)] text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20 active:scale-95 flex items-center space-x-2"
+             >
+                {booting ? <Activity className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                <span>{booting ? 'Initializing...' : 'Unlock Sovereign Manifold'}</span>
+             </button>
           </div>
+        )}
 
-          <div className="titan-card p-6">
-            <div className="glint-overlay" />
-            <h3 className="text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em] mb-6">Security Context</h3>
-            <div className="space-y-4">
-               {[
-                 { label: 'Neural Encryption', value: 'AES-256', icon: Shield },
-                 { label: 'Access Protocol', value: 'DirectLink', icon: Zap },
-                 { label: 'Authentication', value: 'Sovereign-ID', icon: Fingerprint }
-               ].map((item) => (
-                 <div key={item.label} className="flex items-center justify-between group">
-                    <div className="flex items-center space-x-3">
-                       <item.icon className="w-3.5 h-3.5 text-zinc-600 group-hover:text-blue-500 transition-colors" />
-                       <span className="text-[10px] text-zinc-400 group-hover:text-zinc-200 transition-colors">{item.label}</span>
-                    </div>
-                    <span className="text-[10px] text-blue-500/70 font-mono">{item.value}</span>
-                 </div>
-               ))}
+        {/* ACTIVE STAGES (Step 1+) */}
+        {protocolStage >= 1 && (
+          <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {/* Left: Swarm Intelligence */}
+            <div className="col-span-12 lg:col-span-3 space-y-6">
+               <div className="miro-card p-6">
+                  <div className="flex items-center justify-between mb-8">
+                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Swarm Nodes</span>
+                     <Network className="w-4 h-4 text-slate-300" />
+                  </div>
+                  <div className="space-y-4">
+                     {['Alpha', 'Beta', 'Delta', 'Gamma'].map((id) => (
+                       <div key={id} onClick={() => setProtocolStage(3)} className="group flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all cursor-pointer">
+                          <div className="flex items-center space-x-4">
+                             <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-white transition-colors">
+                                <Cpu className="w-5 h-5 text-slate-400 group-hover:text-[var(--miro-blue)]" />
+                             </div>
+                             <div>
+                                <p className="text-xs font-bold text-slate-800">Node-{id}</p>
+                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-tighter">1.5M Param Titan</p>
+                             </div>
+                          </div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                       </div>
+                     ))}
+                  </div>
+                  <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100 italic text-[11px] text-slate-500 text-center">
+                    "All nodes synchronized at locallab.sbs"
+                  </div>
+               </div>
             </div>
+
+            {/* Center: The Core Interaction HUB */}
+            <div className="col-span-12 lg:col-span-6 min-h-[700px]">
+               <div className="miro-card h-full flex flex-col overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/50 backdrop-blur">
+                     <div className="flex items-center space-x-3">
+                        <Terminal className="w-4 h-4 text-slate-400" />
+                        <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-widest">Sovereign Deployment Terminal</h3>
+                     </div>
+                     <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">CLOUD_ACTIVE</span>
+                  </div>
+                  <div className="flex-1 overflow-hidden relative">
+                     <InteractionFeed />
+                  </div>
+               </div>
+            </div>
+
+            {/* Right: Analytics & Diagnostics */}
+            <div className="col-span-12 lg:col-span-3 space-y-6">
+               <div className="miro-card p-6">
+                  <div className="flex items-center justify-between mb-8">
+                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Architecture Telemetry</span>
+                     <Activity className="w-4 h-4 text-slate-300" />
+                  </div>
+                  <div className="space-y-6">
+                     <div className="space-y-2">
+                        <div className="flex justify-between text-[11px] font-bold">
+                           <span className="text-slate-500">Manifold Synchronization</span>
+                           <span className="text-[var(--miro-blue)] text-xs">98.4%</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                           <div className="h-full bg-[var(--miro-blue)] w-[98%] rounded-full shadow-[0_0_5px_rgba(0,111,238,0.3)]" />
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-1 gap-4">
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                           <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Unit Latency</p>
+                           <p className="text-xl font-bold text-slate-800 data-text">0.42<span className="text-xs text-slate-400 ml-1">ms</span></p>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                           <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Neural VRAM</p>
+                           <p className="text-xl font-bold text-slate-800 data-text">1.54<span className="text-xs text-slate-400 ml-1">GB</span></p>
+                        </div>
+                     </div>
+
+                     <div className="pt-4 border-t border-slate-100">
+                        <div className="flex items-center space-x-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
+                           <AlertCircle className="w-4 h-4 text-blue-500" />
+                           <p className="text-[10px] text-blue-600 font-medium tracking-tight">Sovereign 1.5M Param Engine detected. Optimized for CUDA Local-Link.</p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="miro-card p-6 bg-slate-900 group relative overflow-hidden">
+                  <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-blue-500/10 rounded-full blur-[60px] " />
+                  <div className="relative z-10 space-y-4">
+                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">System Entropy</p>
+                     <div className="flex items-end space-x-1 h-12">
+                        {Array.from({ length: 24 }).map((_, i) => (
+                          <div key={i} className="flex-1 bg-blue-500/40 rounded-t-sm" style={{ height: `${Math.sin(i / 3) * 50 + 50}%` }} />
+                        ))}
+                     </div>
+                     <p className="text-[9px] font-mono text-zinc-600">Sync: NOMINAL_PROTOCOL_LOCKED</p>
+                  </div>
+               </div>
+            </div>
+
           </div>
-        </div>
-
-        {/* PANEL 2: INTERACTION FEED (Center) */}
-        <div className="col-span-12 lg:col-span-6 h-[750px]">
-          <InteractionFeed />
-        </div>
-
-        {/* PANEL 3: TITAN TELEMETRY (Right) */}
-        <div className="col-span-12 lg:col-span-3 space-y-6">
-          <div className="titan-card p-6 flex flex-col">
-            <div className="glint-overlay" />
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em]">Titan Telemetry</h3>
-               <Activity className="w-4 h-4 text-purple-500" />
-            </div>
-
-            <div className="space-y-8 flex-1">
-               <div className="space-y-3">
-                  <div className="flex justify-between items-end">
-                     <span className="text-[10px] text-zinc-500 uppercase font-bold">Inference Density</span>
-                     <span className="text-[14px] text-zinc-100 data-text">1,532,472 <span className="text-[10px] text-zinc-600 italic">params</span></span>
-                  </div>
-                  <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden">
-                     <div className="h-full bg-gradient-to-r from-blue-600 to-purple-600 w-[78%] rounded-full opacity-80" />
-                  </div>
-               </div>
-
-               <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/5">
-                     <p className="text-[9px] text-zinc-500 uppercase font-bold">VRAM Usage</p>
-                     <p className="text-lg text-white data-text">1.2<span className="text-[10px] text-zinc-600 ml-1">GB</span></p>
-                  </div>
-                  <div className="space-y-2 p-3 rounded-xl bg-white/5 border border-white/5">
-                     <p className="text-[9px] text-zinc-500 uppercase font-bold">Avg Latency</p>
-                     <p className="text-lg text-white data-text">0.4<span className="text-[10px] text-zinc-600 ml-1">ms</span></p>
-                  </div>
-               </div>
-
-               <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5 space-y-3">
-                  <div className="flex items-center space-x-2 text-[10px] text-blue-400 font-bold uppercase tracking-widest">
-                     <Layers className="w-3 h-3" />
-                     <span>Manifold Status</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                     <div className="status-pulse text-blue-500 bg-blue-500" />
-                     <span className="text-[11px] font-mono text-zinc-300 uppercase tracking-tighter">Geometric Coherence: 0.998</span>
-                  </div>
-               </div>
-            </div>
-
-            <div className="mt-8">
-               <div className="flex items-center justify-between text-[10px] text-zinc-600 font-bold uppercase mb-3">
-                  <span>Engine Threads</span>
-                  <span>48 Core Pool</span>
-               </div>
-               <div className="flex space-x-1">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className={`flex-1 h-3 rounded-sm ${i < 18 ? 'bg-blue-500/40' : 'bg-zinc-800'}`} />
-                  ))}
-               </div>
-            </div>
-          </div>
-
-          <div className="titan-card p-6 bg-purple-500/5">
-            <div className="glint-overlay" />
-            <h3 className="text-[10px] uppercase font-bold text-zinc-500 tracking-[0.2em] mb-4">Neural Buffer</h3>
-            <div className="flex items-end space-x-1 h-12">
-               {Array.from({ length: 30 }).map((_, i) => (
-                  <div 
-                    key={i} 
-                    className="flex-1 bg-purple-500/20 rounded-t-sm" 
-                    style={{ height: `${Math.random() * 100}%` }} 
-                  />
-               ))}
-            </div>
-            <p className="text-[9px] text-zinc-600 mt-3 font-mono">Entropy Syncing: ACTIVE_STREAM</p>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* 3. FOOTER STATUS BAR */}
-      <footer className="h-12 border-t border-white/5 bg-[#020203] flex items-center justify-between px-8 text-[9px] font-mono text-zinc-600 uppercase tracking-[0.2em] z-50">
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-             <span>Swarm Load: 12%</span>
-          </div>
-          <span>GPU Temp: 42°C</span>
-          <span>Entropy: Nominal</span>
-        </div>
-        <div className="flex items-center space-x-3">
-           <Database className="w-3 h-3 text-zinc-800" />
-           <span className="text-zinc-700">Encrypted Node: locallab.sbs</span>
-        </div>
-      </footer>
-
-    </main>
+    </div>
   );
 }

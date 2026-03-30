@@ -1,117 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Roboto+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Roboto+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Titan-Black Color Palette */
-  --bg-deep: #020203;
-  --bg-card: rgba(10, 10, 12, 0.7);
-  --fg-main: #f0f0f2;
-  --fg-muted: #8a8a91;
+  /* Side-Nav Palette (Dark) */
+  --sidebar-bg: #09090b;
+  --sidebar-fg: #f4f4f5;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
   
-  /* Accent Colors (Sovereign Neural) */
-  --accent-blue: #3b82f6;
-  --accent-purple: #8b5cf6;
-  --accent-cyan: #06b6d4;
+  /* Workspace Palette (Professional Light) */
+  --ws-bg: #f8f9fc;
+  --ws-card: #ffffff;
+  --ws-border: #e2e8f0;
+  --ws-fg: #0f172a;
+  --ws-fg-muted: #64748b;
   
-  /* Border & Glass */
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-glint: rgba(59, 130, 246, 0.3);
+  /* Action Tokens (Miro Blue) */
+  --miro-blue: #006fee;
+  --miro-blue-hover: #005bc4;
   
-  /* Shadows */
-  --shadow-neon: 0 0 20px rgba(59, 130, 246, 0.15);
+  /* Accent States */
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-error: #ef4444;
 }
 
 body {
-  background-color: var(--bg-deep);
-  color: var(--fg-main);
-  font-family: 'Outfit', sans-serif;
+  background-color: var(--ws-bg);
+  color: var(--ws-fg);
+  font-family: 'Inter', sans-serif;
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
 }
 
-/* --- THE NEURAL GRID BACKGROUND --- */
-.neural-grid {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-image: 
-    linear-gradient(var(--border-glass) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
-  background-size: 50px 50px;
-  background-position: center center;
-  mask-image: radial-gradient(circle at center, black, transparent 80%);
-  z-index: -1;
-  animation: grid-drift 60s linear infinite;
-  opacity: 0.3;
+/* --- THE PROTOCOL LAYOUT --- */
+.workbench-sidebar {
+  @apply fixed inset-y-0 left-0 w-64 z-50 transition-all duration-300;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
 }
 
-@keyframes grid-drift {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(50px); }
+.workbench-main {
+  @apply pl-64 transition-all duration-300 min-h-screen flex flex-col;
 }
 
-/* --- PREMIUM UI COMPONENTS --- */
+/* --- SAAS COMPONENTS --- */
 @layer components {
-  .titan-card {
-    @apply relative overflow-hidden rounded-2xl backdrop-blur-xl transition-all duration-500;
-    background: var(--bg-card);
-    border: 1px solid var(--border-glass);
-    box-shadow: var(--shadow-neon);
+  .miro-card {
+    @apply bg-white rounded-xl border border-[var(--ws-border)] shadow shadow-slate-200/50 transition-all duration-200;
   }
 
-  .titan-card:hover {
-    @apply -translate-y-1;
-    border-color: var(--border-glint);
-    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+  .miro-card:hover {
+    @apply border-[var(--miro-blue)] shadow-lg shadow-blue-500/5;
   }
 
-  /* MiroFish-style "Glint" effect */
-  .glint-overlay {
-    @apply absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-700;
-    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-    background-size: 200% 200%;
+  .nav-item {
+    @apply flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer;
   }
 
-  .titan-card:hover .glint-overlay {
-    @apply opacity-100;
-    animation: glint-shimmer 2s linear infinite;
+  .nav-item.active {
+    @apply bg-white/10 text-white;
+  }
+
+  .nav-item.inactive {
+    @apply text-zinc-500 hover:bg-white/5 hover:text-zinc-200;
   }
 
   .data-text {
     font-family: 'Roboto Mono', monospace;
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: -0.02em;
   }
 
-  .status-pulse {
-    @apply w-2 h-2 rounded-full;
-    box-shadow: 0 0 8px currentColor;
-    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  /* Miro-style Step Indicator */
+  .step-node {
+    @apply relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[10px] font-bold;
   }
 }
 
-/* --- ANIMATIONS --- */
-@keyframes glint-shimmer {
-  0% { background-position: -200% -200%; }
-  100% { background-position: 200% 200%; }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.1); }
-}
-
 /* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { 
-  background: var(--border-glass);
+  background: var(--ws-border);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+::-webkit-scrollbar-thumb:hover { background: var(--ws-fg-muted); }
+
+/* Animations for Step Loading */
+@keyframes step-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-step { animation: step-pulse 2s infinite; }

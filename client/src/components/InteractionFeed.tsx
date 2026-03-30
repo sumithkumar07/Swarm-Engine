@@ -15,11 +15,11 @@ interface Message {
   color: string;
 }
 
-const AGENT_MAP: Record<string, { color: string, name: string, glow: string }> = {
-  "Alpha": { color: "text-blue-400", name: "TITAN-ALPHA", glow: "shadow-blue-500/20" },
-  "Beta": { color: "text-emerald-400", name: "TITAN-BETA", glow: "shadow-emerald-500/20" },
-  "Delta": { color: "text-purple-400", name: "TITAN-DELTA", glow: "shadow-purple-500/20" },
-  "Gamma": { color: "text-amber-400", name: "TITAN-GAMMA", glow: "shadow-amber-500/20" }
+const AGENT_MAP: Record<string, { color: string, name: string }> = {
+  "Alpha": { color: "text-[var(--miro-blue)]", name: "TITAN-ALPHA" },
+  "Beta": { color: "text-emerald-500", name: "TITAN-BETA" },
+  "Delta": { color: "text-purple-500", name: "TITAN-DELTA" },
+  "Gamma": { color: "text-amber-500", name: "TITAN-GAMMA" }
 };
 
 export default function InteractionFeed() {
@@ -32,11 +32,11 @@ export default function InteractionFeed() {
     setMessages([
       {
         id: '0',
-        sender: 'CORE',
+        sender: 'PROTOCOL',
         role: 'system',
-        content: `Initialization Protocol: Sovereign v1.51 | Synchronizing Global Manifold...`,
+        content: `Initialization sequence ready. Awaiting Sovereign Manifold authorization...`,
         timestamp: new Date().toLocaleTimeString(),
-        color: 'text-zinc-500'
+        color: 'text-slate-400'
       }
     ]);
 
@@ -45,24 +45,10 @@ export default function InteractionFeed() {
       .then(data => {
         if(data.engine_loaded) {
           setIsLive(true);
-          addSystemMessage("Neural Link Established. Titan-Nodes: [ALPHA, BETA, DELTA, GAMMA] Verified.");
         }
       })
-      .catch(() => {
-        addSystemMessage("[LATENCY_FAULT] Cloud Brain synchronization pending...");
-      });
+      .catch(() => {});
   }, []);
-
-  const addSystemMessage = (text: string) => {
-    setMessages(prev => [...prev, {
-      id: Math.random().toString(),
-      sender: 'SYSTEM',
-      role: 'system',
-      content: text,
-      timestamp: new Date().toLocaleTimeString(),
-      color: 'text-zinc-600'
-    }]);
-  };
 
   const triggerAgentAction = async (agentId: string) => {
     if(!isLive || isStreaming) return;
@@ -85,7 +71,7 @@ export default function InteractionFeed() {
         color: AGENT_MAP[agentId].color
       }]);
     } catch (e) {
-      addSystemMessage(`[ERROR] Execution failure in Node ${agentId}. Check Telemetry.`);
+      // Silent fail for clean SaaS feel
     } finally {
       setIsStreaming(false);
     }
@@ -98,60 +84,39 @@ export default function InteractionFeed() {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full bg-[#020203]/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-xl relative group shadow-2xl">
-      <div className="glint-overlay" />
+    <div className="flex flex-col h-full bg-white relative overflow-hidden">
       
-      {/* 1. TERMINAL HEADER */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/2">
-        <div className="flex items-center space-x-3">
-          <Terminal className="w-4 h-4 text-blue-500" />
-          <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-400 uppercase">Interaction_Terminal</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
-             <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500'} animate-pulse`} />
-             <span className="text-[9px] font-bold text-zinc-500 tracking-widest">{isLive ? 'SYNCED' : 'IDLE'}</span>
-          </div>
-          <Binary className="w-4 h-4 text-zinc-700 hover:text-blue-500 transition-colors cursor-pointer" />
-        </div>
-      </div>
-
-      {/* 2. NEURAL FEED AREA */}
+      {/* Messages Area - Clean SaaS View */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-6 space-y-5 data-text text-[13px] scroll-smooth"
+        className="flex-1 overflow-y-auto p-8 space-y-6 data-text text-[13px] leading-relaxed"
       >
         {messages.map((msg) => (
-          <div key={msg.id} className="flex flex-col space-y-2 group/msg translate-y-2 animate-in fade-in duration-500">
-            <div className="flex items-center justify-between">
-               <div className="flex items-center space-x-2">
-                  <span className={`text-[9px] px-2 py-0.5 rounded border ${msg.role === 'system' ? 'text-zinc-600 border-zinc-800' : 'text-blue-400 border-blue-500/20 bg-blue-500/10'} font-bold tracking-widest`}>
-                    {msg.sender}
-                  </span>
-                  <span className="text-[9px] text-zinc-700 tracking-tighter">[{msg.timestamp}]</span>
-               </div>
-               <div className="w-1 h-1 rounded-full bg-zinc-800 group-hover/msg:bg-blue-500/50 transition-colors" />
+          <div key={msg.id} className="flex flex-col space-y-2 group/msg animate-in fade-in slide-in-from-left-2 duration-300">
+            <div className="flex items-center space-x-3">
+               <span className={`text-[10px] px-2 py-0.5 rounded-full border border-slate-100 font-bold tracking-widest ${msg.color}`}>
+                 {msg.sender}
+               </span>
+               <span className="text-[9px] text-slate-300 font-bold uppercase tracking-tighter">{msg.timestamp}</span>
             </div>
-            <div className={`pl-4 border-l border-white/5 py-1 ${msg.role === 'system' ? 'text-zinc-600 italic' : 'text-zinc-100'}`}>
-              <span className={msg.role === 'agent' ? 'opacity-90' : 'opacity-60 text-xs'}>
-                {msg.content}
-              </span>
+            <div className={`pl-4 border-l-2 ${msg.role === 'system' ? 'border-slate-100 text-slate-400 italic' : 'border-blue-100 text-slate-700'} py-1`}>
+              {msg.content}
             </div>
           </div>
         ))}
         {isStreaming && (
-          <div className="flex items-center space-x-2 text-blue-500/50 animate-pulse pl-4">
-             <Activity className="w-3 h-3" />
-             <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Neural Thinking...</span>
+          <div className="flex items-center space-x-3 text-blue-500 animate-pulse pl-4">
+             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+             <span className="text-[10px] uppercase font-bold tracking-widest">Neural Manifold Thinking...</span>
           </div>
         )}
       </div>
 
-      {/* 3. COMMAND CONSOLE */}
-      <div className="p-6 border-t border-white/5 bg-white/2 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <Layers className="w-4 h-4 text-zinc-800" />
-          <span className="text-[9px] text-zinc-600 font-bold tracking-[0.2em] uppercase">Ready_Command</span>
+      {/* Interaction Footer - Miro Style */}
+      <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+           <Activity className="w-4 h-4 text-slate-300" />
+           <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sovereign Link Ready</span>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -160,18 +125,13 @@ export default function InteractionFeed() {
               key={id}
               onClick={() => triggerAgentAction(id)}
               disabled={!isLive || isStreaming}
-              title={`Trigger ${AGENT_MAP[id].name}`}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl border border-white/5 bg-white/5 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 group ${(!isLive || isStreaming) ? 'opacity-20 cursor-not-allowed' : 'hover:scale-105 active:scale-95'}`}
+              className={`px-4 py-2 rounded-lg bg-white border border-slate-200 text-[11px] font-bold text-slate-600 hover:border-blue-500 hover:text-blue-600 transition-all shadow-sm ${(!isLive || isStreaming) ? 'opacity-20' : 'hover:-translate-y-0.5 active:translate-y-0'}`}
             >
-              <Send className={`w-3 h-3 ${AGENT_MAP[id].color} group-hover:scale-110 transition-transform`} />
-              <span className="text-[10px] font-bold text-zinc-500 group-hover:text-zinc-300">{id}</span>
+              {id}
             </button>
           ))}
         </div>
       </div>
-
-      {/* 4. SCANLINE OVERLAY */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
     </div>
   );
 }
