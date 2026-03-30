@@ -1,44 +1,38 @@
 # Contributing to Sovereign Swarm
 
-First off, thank you for considering contributing to Sovereign Swarm Intelligence! It's people like you that make Sovereign a better platform for everyone.
+We welcome contributions to the Sovereign Swarm (V1.51). As a high-performance neural project, we maintain strict standards for code quality and mathematical sincerity.
 
-## Code of Conduct
+## 🌩️ Contribution Areas
 
-By participating in this project, you are expected to uphold our Code of Conduct. Please report any unacceptable behavior.
+### 1. Engine Optimization (C++/CUDA)
+- Improving the 64-bit native bridge.
+- Optimizing manifold kernels for lower-end local hardware.
+- Hardening the Clifford Initialization routines.
 
-## How Can I Contribute?
+### 2. Swarm Dynamics (Alpha/Beta/Delta/Gamma)
+- Developing new agent archetypes.
+- Improving inter-node synchronization during high-velocity inference.
 
-### Reporting Bugs
-If you find a bug, please create an issue on GitHub. Before creating an issue, please check existing issues to see if the bug has already been reported.
-
-### Suggesting Enhancements
-If you have an idea for an enhancement, please create a new issue and describe the enhancement in detail.
-
-### Pull Requests
-1. Fork the repository and create your branch from `main`.
-2. If you've added code that should be tested, add tests.
-3. If you've changed APIs, update the documentation.
-4. Ensure the test suite passes.
-5. Make sure your code follows the existing style (see `.editorconfig`).
-
-## Development Environment
-
-### Local Setup
-```bash
-# Frontend
-cd client
-npm install
-npm run dev
-
-# Core Engine
-cd engine
-# Compile using nvcc or g++
-```
-
-## Community
-
-Join our community at [locallab.sbs](https://locallab.sbs) to discuss the future of microscopic intelligence!
+### 3. Workbench Experience (Next.js/TS)
+- Enhancing the cinematic visualizations at **locallab.sbs**.
+- Improving the grid-space interaction logic.
 
 ---
 
-**© 2026 Sovereign Swarm Intelligence**
+## 🛠️ Submission Process
+
+1. **Fork the Repository**: Create your own feature branch.
+2. **Adhere to Patterns**: Ensure all C++ code follows the memory bridge patterns established in `v9_swarm/`.
+3. **Verify Manifold Stability**: Any parameter change must be validated against the 1.5M param baseline.
+4. **Pull Request**: Detail your changes, specifically highlighting the impact on local performance or agent autonomy.
+
+---
+
+## 🏛️ Code of Conduct
+We maintain a professional, high-trust environment. See our [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for details.
+
+---
+
+<div align="center">
+  <p><b>Build the Future of Local Neural Authority with us.</b></p>
+</div>
