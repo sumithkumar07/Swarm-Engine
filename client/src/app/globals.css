@@ -5,94 +5,86 @@
 @tailwind utilities;
 
 :root {
-  /* Side-Nav Palette (Dark) */
-  --sidebar-bg: #09090b;
-  --sidebar-fg: #f4f4f5;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  /* Canvas Palette (Pure SaaS) */
+  --canvas-bg: #f8f9fa;
+  --canvas-grid: #e9ecef;
   
-  /* Workspace Palette (Professional Light) */
-  --ws-bg: #f8f9fc;
-  --ws-card: #ffffff;
-  --ws-border: #e2e8f0;
-  --ws-fg: #0f172a;
-  --ws-fg-muted: #64748b;
+  /* Node Palette (The 4 Agents) */
+  --node-bg: #ffffff;
+  --node-border: #dee2e6;
+  --node-fg: #212529;
+  --node-fg-muted: #6c757d;
   
-  /* Action Tokens (Miro Blue) */
-  --miro-blue: #006fee;
-  --miro-blue-hover: #005bc4;
+  /* Primary Action (Titan Blue) */
+  --titan-blue: #0d6efd;
+  --titan-blue-hover: #0b5ed7;
   
-  /* Accent States */
-  --accent-success: #10b981;
-  --accent-warning: #f59e0b;
-  --accent-error: #ef4444;
+  /* Special States */
+  --node-glow: rgba(13, 110, 253, 0.1);
 }
 
 body {
-  background-color: var(--ws-bg);
-  color: var(--ws-fg);
+  background-color: var(--canvas-bg);
+  color: var(--node-fg);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   margin: 0;
-  overflow-x: hidden;
+  overflow: hidden; /* Canvas-style fixed view */
 }
 
-/* --- THE PROTOCOL LAYOUT --- */
-.workbench-sidebar {
-  @apply fixed inset-y-0 left-0 w-64 z-50 transition-all duration-300;
-  background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
+/* --- THE AGENT CANVAS --- */
+.agent-canvas {
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(var(--canvas-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  position: relative;
+  overflow: hidden;
 }
 
-.workbench-main {
-  @apply pl-64 transition-all duration-300 min-h-screen flex flex-col;
-}
-
-/* --- SAAS COMPONENTS --- */
+/* --- INTERACTIVE GRID COMPONENTS --- */
 @layer components {
-  .miro-card {
-    @apply bg-white rounded-xl border border-[var(--ws-border)] shadow shadow-slate-200/50 transition-all duration-200;
+  .agent-node {
+    @apply bg-white rounded-2xl border border-[var(--node-border)] p-6 shadow-sm transition-all duration-300;
   }
 
-  .miro-card:hover {
-    @apply border-[var(--miro-blue)] shadow-lg shadow-blue-500/5;
+  .agent-node:hover {
+    @apply border-[var(--titan-blue)] shadow-xl shadow-blue-500/5 -translate-y-1;
   }
 
-  .nav-item {
-    @apply flex items-center space-x-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer;
+  /* Floating Bottom Command Bar */
+  .command-bar {
+    @apply fixed bottom-8 left-1/2 -translate-x-1/2 w-[90%] max-w-4xl z-50;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .nav-item.active {
-    @apply bg-white/10 text-white;
+  .glass-bar {
+    @apply bg-white/80 backdrop-blur-xl border border-[var(--node-border)] rounded-2xl p-4 shadow-2xl;
   }
 
-  .nav-item.inactive {
-    @apply text-zinc-500 hover:bg-white/5 hover:text-zinc-200;
+  .btn-primary {
+    @apply bg-[var(--titan-blue)] hover:bg-[var(--titan-blue-hover)] text-white px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 shadow-lg shadow-blue-600/10;
   }
 
-  .data-text {
-    font-family: 'Roboto Mono', monospace;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-
-  /* Miro-style Step Indicator */
-  .step-node {
-    @apply relative flex items-center justify-center w-6 h-6 rounded-full border-2 text-[10px] font-bold;
-  }
+  /* Typography */
+  .title-main { font-family: 'Outfit', sans-serif; font-weight: 700; }
+  .mono-data { font-family: 'Roboto Mono', monospace; }
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-  background: var(--ws-border);
-  border-radius: 10px;
+/* Animations for Node Logic */
+@keyframes node-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px transparent; }
+  50% { transform: scale(1.02); box-shadow: 0 0 30px var(--node-glow); }
 }
-::-webkit-scrollbar-thumb:hover { background: var(--ws-fg-muted); }
+.thinking { animation: node-pulse 2s ease-in-out infinite; }
 
-/* Animations for Step Loading */
-@keyframes step-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Cinematic Hero Animations */
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
-.animate-step { animation: step-pulse 2s infinite; }
+.animate-hero { animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
