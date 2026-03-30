@@ -5,7 +5,7 @@ import { Terminal, Cpu, Shield, Globe, Send } from 'lucide-react';
 
 // --- CONFIGURATION ---
 // Once you create your HF Space, replace this URL with your custom HF Space URL
-const HF_SPACE_URL = "https://sumithkumar07-sovereign-brain.hf.space"; 
+const HF_SPACE_URL = "https://sumith007-sovereign-brain.hf.space"; 
 
 interface Message {
   id: string;
