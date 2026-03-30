@@ -339,7 +339,7 @@ int main() {
     // PHASE 1: THE ACADEMY (PRE-TRAINING THE MASTER BRAIN NATIVELY)
     // -------------------------------------------------------------
     std::cout << "[SYSTEM] Compiling Synthetic Micro-Market Dataset...\n";
-    std::vector<int> dataset = generate_market_logic(18000);
+    std::vector<int> dataset = generate_market_logic(4000);
     
     std::cout << "[SYSTEM] Instantiating Master Sovereign Block...\n";
     SovereignBlock master;
