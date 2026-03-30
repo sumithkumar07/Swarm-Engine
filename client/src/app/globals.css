@@ -1,27 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Roboto+Mono:wght@300;400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #050505;
-  --foreground: #ededed;
-  --accent: #3b82f6;
+  /* Titan-Black Color Palette */
+  --bg-deep: #020203;
+  --bg-card: rgba(10, 10, 12, 0.7);
+  --fg-main: #f0f0f2;
+  --fg-muted: #8a8a91;
+  
+  /* Accent Colors (Sovereign Neural) */
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --accent-cyan: #06b6d4;
+  
+  /* Border & Glass */
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-glint: rgba(59, 130, 246, 0.3);
+  
+  /* Shadows */
+  --shadow-neon: 0 0 20px rgba(59, 130, 246, 0.15);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-deep);
+  color: var(--fg-main);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  margin: 0;
   overflow-x: hidden;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* --- THE NEURAL GRID BACKGROUND --- */
+.neural-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: 
+    linear-gradient(var(--border-glass) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-glass) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+  z-index: -1;
+  animation: grid-drift 60s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes grid-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50px); }
+}
+
+/* --- PREMIUM UI COMPONENTS --- */
+@layer components {
+  .titan-card {
+    @apply relative overflow-hidden rounded-2xl backdrop-blur-xl transition-all duration-500;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    box-shadow: var(--shadow-neon);
   }
-  .glass {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+
+  .titan-card:hover {
+    @apply -translate-y-1;
+    border-color: var(--border-glint);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
+  }
+
+  /* MiroFish-style "Glint" effect */
+  .glint-overlay {
+    @apply absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-700;
+    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+    background-size: 200% 200%;
+  }
+
+  .titan-card:hover .glint-overlay {
+    @apply opacity-100;
+    animation: glint-shimmer 2s linear infinite;
+  }
+
+  .data-text {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .status-pulse {
+    @apply w-2 h-2 rounded-full;
+    box-shadow: 0 0 8px currentColor;
+    animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
+
+/* --- ANIMATIONS --- */
+@keyframes glint-shimmer {
+  0% { background-position: -200% -200%; }
+  100% { background-position: 200% 200%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { 
+  background: var(--border-glass);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
