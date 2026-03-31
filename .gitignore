@@ -22,3 +22,42 @@ v7_output.txt
 
 # Third-party downloaded repos
 MiroFish/
+
+# Environments
+venv/
+.env
+.venv
+env/
+python_env/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Data & Models
+master_brain.bin
+Personalities.json
+personalities.json
+vocab.txt
+tokenizer.h
+sovereign_v10_titan.cpp
+cuda_test.cu
+hello_gpu.cu
+*.bin
+*.pt
+*.pth
+*.json
+!package.json
+!tsconfig.json
+!next.config.js
+!tailwind.config.ts
+
+# Sessions
+sessions/
