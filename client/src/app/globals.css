@@ -32,14 +32,13 @@ body {
   overflow: hidden; /* Canvas-style fixed view */
 }
 
-/* --- THE AGENT CANVAS --- */
+/* --- THE AGENT CANVAS (Dotted MiroFish Style) --- */
 .agent-canvas {
   width: 100vw;
   height: 100vh;
-  background-image: 
-    linear-gradient(var(--canvas-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--canvas-grid) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--canvas-grid) 1px, transparent 1px);
+  background-size: 30px 30px;
   position: relative;
   overflow: hidden;
 }
@@ -73,18 +72,70 @@ body {
   .mono-data { font-family: 'Roboto Mono', monospace; }
 }
 
-/* Animations for Node Logic */
-@keyframes node-pulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 20px transparent; }
-  50% { transform: scale(1.02); box-shadow: 0 0 30px var(--node-glow); }
+/* --- MIROFISH BASE AESTHETIC --- */
+body {
+  background-color: #fcfcfc;
+  background-image: radial-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 40px 40px;
+  @apply text-slate-900;
 }
-.thinking { animation: node-pulse 2s ease-in-out infinite; }
 
-/* Cinematic Hero Animations */
-@keyframes fade-in-up {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+@layer components {
+  .manifold-node {
+    @apply w-3.5 h-3.5 rounded-full shadow-sm transition-all duration-500 absolute cursor-pointer z-20;
+    border: none !important;
+  }
+
+  .node-alpha { background-color: #f97316; } /* Orange */
+  .node-beta { background-color: #ef4444; } /* Red */
+  .node-delta { background-color: #3b82f6; } /* Blue */
+  .node-gamma { background-color: #8b5cf6; } /* Violet */
+
+  .manifold-node.active {
+    @apply scale-125 shadow-[0_0_15px_rgba(0,0,0,0.1)];
+  }
+
+  .master-node-core {
+    @apply w-6 h-6 bg-slate-900 rounded-full flex items-center justify-center shadow-lg z-30 transition-all;
+  }
+
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/40 shadow-xl;
+  }
+
+  /* Relationship Label (Text on Path) */
+  .relationship-label {
+    @apply font-bold text-[8px] uppercase tracking-[0.2em] fill-slate-400 pointer-events-none;
+    paint-order: stroke;
+    stroke: #fcfcfc;
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
-.animate-hero { animation: fade-in-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* Neural Pulse Path */
+.pulse-path {
+  fill: none;
+  stroke: #cccccc;
+  stroke-width: 1;
+  transition: all 0.5s ease;
+}
+
+.pulse-path.active {
+  stroke: #3b82f6;
+  stroke-width: 2;
+}
+
+@keyframes flow-pulse {
+  0% { stroke-dashoffset: 40; opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0.2; }
+}
+
+.flowing {
+  stroke-dasharray: 4 36;
+  animation: flow-pulse 1s linear infinite;
+}
 
 .scrollbar-none::-webkit-scrollbar { display: none; }

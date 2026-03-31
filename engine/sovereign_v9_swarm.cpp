@@ -443,28 +443,34 @@ int main() {
 // PHASE 4: THE CLOUD BRIDGE (C-INTERAFCE FOR PYTHON/HUGGINGFACE)
 // -------------------------------------------------------------
 
+#ifdef _WIN32
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 extern "C" {
     // Brain Factory: Create a persistent 1.5M Parameter Master Block
-    void* sovereign_init_master() {
+    EXPORT void* sovereign_init_master() {
         return (void*)new SovereignBlock();
     }
 
     // Agent Factory: Clone from Master into a named personality
-    void* sovereign_init_agent(const char* name, void* master_ptr, int seed) {
+    EXPORT void* sovereign_init_agent(const char* name, void* master_ptr, int seed) {
         if (!master_ptr) return nullptr;
         SovereignBlock* master = (SovereignBlock*)master_ptr;
         return (void*)new SovereignAgent(std::string(name), *master, seed);
     }
 
     // Input: Feed text into the agent's neural state
-    void sovereign_agent_observe(void* agent_ptr, const char* text) {
+    EXPORT void sovereign_agent_observe(void* agent_ptr, const char* text) {
         if (!agent_ptr || !text) return;
         SovereignAgent* agent = (SovereignAgent*)agent_ptr;
         agent->observe(std::string(text));
     }
 
     // Output: Sample generated response from the VRAM/RAM state
-    const char* sovereign_agent_act(void* agent_ptr, int max_chars, double temp) {
+    EXPORT const char* sovereign_agent_act(void* agent_ptr, int max_chars, double temp) {
         if (!agent_ptr) return "";
         SovereignAgent* agent = (SovereignAgent*)agent_ptr;
         
@@ -475,7 +481,7 @@ extern "C" {
     }
 
     // Cleanup
-    void sovereign_free_agent(void* agent_ptr) {
+    EXPORT void sovereign_free_agent(void* agent_ptr) {
         if (agent_ptr) delete (SovereignAgent*)agent_ptr;
     }
 }
