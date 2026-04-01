@@ -81,10 +81,15 @@ export default function Home() {
       const width = canvas.width;
       const height = canvas.height;
 
-      // 1. Setup Dynamic Data (Based on Cloud Agents)
+      // 1. Setup Dynamic Data (MiroFish Premium Palette)
       const nodes: Node[] = [];
       const links: Link[] = [];
-      const colors = ['#f97316', '#ef4444', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+      const colors = [
+         '#FF6B35', '#004E89', '#7B2D8E', '#1A936F', '#E63946', '#457B9D',
+         '#F4A261', '#2A9D8F', '#E76F51', '#264653', '#6A0572', '#3A86FF',
+         '#FB8500', '#023047', '#219EBC', '#8338EC', '#FF006E', '#3A0CA3',
+         '#06D6A0', '#118AB2'
+      ];
       const activeAgents = agentMetadata.length > 0 ? agentMetadata : [];
 
       activeAgents.forEach((agent, i) => {
@@ -95,26 +100,31 @@ export default function Home() {
             type: 'agent',
             color: colors[i % colors.length],
             uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`,
-            x: width / 2 + (Math.random() - 0.5) * 500,
-            y: height / 2 + (Math.random() - 0.5) * 500
+            x: width / 2 + (Math.random() - 0.5) * 600,
+            y: height / 2 + (Math.random() - 0.5) * 400
          });
          
-         // Weak visual mesh link to previous node to keep them grouped loosely
+         // Build a richer ring-mesh topology
          if (i > 0) {
-            links.push({ id: `l-${agentId}`, source: activeAgents[i-1].name, target: agentId, label: 'MESH_LINK' });
-         } else if (activeAgents.length > 1) {
-             links.push({ id: `l-${agentId}`, source: activeAgents[activeAgents.length-1].name, target: agentId, label: 'MESH_LINK' });
+            links.push({ id: `l-${agentId}`, source: activeAgents[i-1].name, target: agentId, label: 'MESH' });
          }
       });
+      if (activeAgents.length > 2) {
+         links.push({ id: 'l-ring-close', source: activeAgents[activeAgents.length-1].name, target: activeAgents[0].name, label: 'MESH' });
+         for (let i = 0; i < activeAgents.length; i++) {
+             const cross = (i + 4) % activeAgents.length;
+             if (cross !== i) links.push({ id: `l-cross-${i}`, source: activeAgents[i].name, target: activeAgents[cross].name, label: 'CROSS' });
+         }
+      }
 
       // 2. Setup Simulation
       const simulation = d3.forceSimulation<Node>(nodes)
          .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(150).strength(0.05))
-         .force("charge", d3.forceManyBody().strength(-200))
+         .force("charge", d3.forceManyBody().strength(-400))
          .force("center", d3.forceCenter(width / 2, height / 2))
          .force("collision", d3.forceCollide().radius(45))
-         .alphaDecay(0)  // Never settle — stay alive forever
-         .velocityDecay(0.4);
+         .alphaDecay(0)
+         .velocityDecay(0.3);
 
       // Ambient Drift: give each node a subtle random velocity so the graph "breathes"
       let driftTick = 0;
@@ -148,14 +158,33 @@ export default function Home() {
       const drawLoop = () => {
          if (!ctx) return;
          ctx.clearRect(0, 0, width, height);
+
+         // MiroFish Dot Grid Background
+         ctx.save();
+         ctx.translate(currentTransform.x, currentTransform.y);
+         ctx.scale(currentTransform.k, currentTransform.k);
+         ctx.beginPath();
+         ctx.fillStyle = 'rgba(203, 213, 225, 0.3)';
+         const gap = 40;
+         const startX = Math.floor((-currentTransform.x / currentTransform.k) / gap) * gap;
+         const startY = Math.floor((-currentTransform.y / currentTransform.k) / gap) * gap;
+         const endX = startX + (width / currentTransform.k) + gap * 2;
+         const endY = startY + (height / currentTransform.k) + gap * 2;
+         for (let x = startX; x < endX; x += gap) {
+            for (let y = startY; y < endY; y += gap) {
+               ctx.rect(x, y, 1.5, 1.5);
+            }
+         }
+         ctx.fill();
+         ctx.restore();
          ctx.save();
          ctx.translate(currentTransform.x, currentTransform.y);
          ctx.scale(currentTransform.k, currentTransform.k);
 
          // Draw Links
          ctx.beginPath();
-         ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
-         ctx.lineWidth = 1;
+         ctx.strokeStyle = 'rgba(148, 163, 184, 0.12)';
+         ctx.lineWidth = 0.5;
          links.forEach(l => {
             const s = l.source as any;
             const t = l.target as any;
@@ -185,14 +214,25 @@ export default function Home() {
          });
          pulsesRef.current = pulsesRef.current.filter(p => p.p < 1);
 
-         // Draw Nodes
+         // Draw Nodes (MiroFish Strokes & Glow)
          nodes.forEach(n => {
+            const isTargeted = interactState.hover?.id === n.id || interactState.select?.id === n.id;
+            
             ctx.beginPath();
-            ctx.arc(n.x || 0, n.y || 0, n.type === 'core' ? 12 : 7, 0, 2 * Math.PI);
-            ctx.fillStyle = n.type === 'core' ? '#ffffff' : (n.color || '#3b82f6');
-            ctx.shadowBlur = (interactState.hover?.id === n.id || interactState.select?.id === n.id) ? 15 : 0;
+            ctx.arc(n.x || 0, n.y || 0, isTargeted ? 12 : 9, 0, 2 * Math.PI);
+            
+            // Neon Glow
+            ctx.shadowBlur = isTargeted ? 20 : 12;
             ctx.shadowColor = n.color || '#3b82f6';
+            
+            ctx.fillStyle = n.color || '#3b82f6';
             ctx.fill();
+            
+            // High-Contrast White Stroke
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            
             ctx.shadowBlur = 0;
 
             // Labels
