@@ -61,6 +61,7 @@ export default function Home() {
    const [hoveredNode, setHoveredNode] = useState<Node | null>(null);
    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
    const [agentMetadata, setAgentMetadata] = useState<any[]>([]);
+   const [swarmLoading, setSwarmLoading] = useState(false);
 
    const scrollRef = useRef<HTMLDivElement>(null);
    const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,7 +112,21 @@ export default function Home() {
          .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(150).strength(0.05))
          .force("charge", d3.forceManyBody().strength(-200))
          .force("center", d3.forceCenter(width / 2, height / 2))
-         .force("collision", d3.forceCollide().radius(45));
+         .force("collision", d3.forceCollide().radius(45))
+         .alphaDecay(0)  // Never settle — stay alive forever
+         .velocityDecay(0.4);
+
+      // Ambient Drift: give each node a subtle random velocity so the graph "breathes"
+      let driftTick = 0;
+      simulation.on('tick', () => {
+         driftTick++;
+         if (driftTick % 120 === 0) {
+            nodes.forEach(n => {
+               n.vx = (n.vx || 0) + (Math.random() - 0.5) * 0.8;
+               n.vy = (n.vy || 0) + (Math.random() - 0.5) * 0.8;
+            });
+         }
+      });
 
       // 3. Zoom Handling
       let currentTransform = transform;
@@ -139,7 +154,7 @@ export default function Home() {
 
          // Draw Links
          ctx.beginPath();
-         ctx.strokeStyle = '#1e293b';
+         ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
          ctx.lineWidth = 1;
          links.forEach(l => {
             const s = l.source as any;
@@ -181,7 +196,7 @@ export default function Home() {
             ctx.shadowBlur = 0;
 
             // Labels
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = '#475569';
             ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
             ctx.fillText(n.label || '', n.x || 0, (n.y || 0) + -15);
@@ -285,13 +300,23 @@ export default function Home() {
 
    const triggerSwarm = async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!input.trim() || !isLive) return;
+      if (!input.trim()) return;
       const seed = input;
       setInput('');
       setSessionId(null);
       setMessages([]);
       setShowReport(false);
       setReportContent('');
+      setSwarmLoading(true);
+
+      // Inject a local "SYSTEM" message so users see immediate feedback
+      setMessages([{
+         id: 'sys-init',
+         sender: 'SYSTEM',
+         content: `Injecting seed: "${seed}" — Waking ${agentMetadata.length} agents...`,
+         timestamp: new Date().toLocaleTimeString()
+      }]);
+
       try {
          const res = await fetch(`${BACKEND_URL}/swarm/start`, {
             method: 'POST',
@@ -304,6 +329,14 @@ export default function Home() {
          }
       } catch (e) {
          console.error("Failed to start swarm:", e);
+         setMessages(prev => [...prev, {
+            id: 'sys-error',
+            sender: 'SYSTEM',
+            content: 'Connection to Sovereign Engine failed. The HuggingFace Space may be sleeping — please wait 30s and retry.',
+            timestamp: new Date().toLocaleTimeString()
+         }]);
+      } finally {
+         setSwarmLoading(false);
       }
    };
 
@@ -363,8 +396,8 @@ export default function Home() {
          {/* 1. TOP NAV */}
          <div className="h-12 flex items-center justify-between px-10 z-50 pointer-events-none absolute w-full">
             <div className="flex items-center space-x-2 pointer-events-auto">
-               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Sovereign_Manifold_v1.5</span>
+               <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-red-400'}`} />
+               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{isLive ? 'Sovereign_Manifold_v1.5 — LIVE' : 'Sovereign_Manifold — CONNECTING...'}</span>
             </div>
             <button
                onClick={() => setView('landing')}
@@ -396,7 +429,11 @@ export default function Home() {
                      placeholder="Initialize Sovereign Simulation (e.g., 'Solve climate resource allocation')"
                      className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-bold text-slate-800 placeholder:text-slate-400 tracking-wide"
                   />
-                  <button type="submit" disabled={!isLive || !input.trim()} className="bg-[#0d6efd] text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 hover:bg-blue-600 hover:shadow-lg disabled:opacity-20 disabled:hover:scale-100">Engage Swarm</button>
+                  <button type="submit" disabled={swarmLoading || !input.trim()} className="bg-[#0d6efd] text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 hover:bg-blue-600 hover:shadow-lg disabled:opacity-30 disabled:hover:scale-100 min-w-[160px] flex items-center justify-center gap-2">
+                     {swarmLoading ? (
+                        <><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Processing...</>
+                     ) : 'Engage Swarm'}
+                  </button>
                </div>
             </form>
          </div>
