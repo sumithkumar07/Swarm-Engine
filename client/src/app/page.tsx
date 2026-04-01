@@ -81,9 +81,7 @@ export default function Home() {
       const height = canvas.height;
 
       // 1. Setup Dynamic Data (Based on Cloud Agents)
-      const nodes: Node[] = [
-         { id: 'core', label: 'Central Brain', type: 'core', uuid: 'MASTER_V10_TITAN', x: width / 2, y: height / 2 }
-      ];
+      const nodes: Node[] = [];
       const links: Link[] = [];
       const colors = ['#f97316', '#ef4444', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
       const activeAgents = agentMetadata.length > 0 ? agentMetadata : [];
@@ -96,35 +94,48 @@ export default function Home() {
             type: 'agent',
             color: colors[i % colors.length],
             uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`,
-            x: width / 2 + (Math.random() - 0.5) * 200,
-            y: height / 2 + (Math.random() - 0.5) * 200
+            x: width / 2 + (Math.random() - 0.5) * 500,
+            y: height / 2 + (Math.random() - 0.5) * 500
          });
-         links.push({ id: `l-${agentId}`, source: 'core', target: agentId, label: 'NEURAL_PULSE' });
+         
+         // Weak visual mesh link to previous node to keep them grouped loosely
+         if (i > 0) {
+            links.push({ id: `l-${agentId}`, source: activeAgents[i-1].name, target: agentId, label: 'MESH_LINK' });
+         } else if (activeAgents.length > 1) {
+             links.push({ id: `l-${agentId}`, source: activeAgents[activeAgents.length-1].name, target: agentId, label: 'MESH_LINK' });
+         }
       });
 
       // 2. Setup Simulation
       const simulation = d3.forceSimulation<Node>(nodes)
-         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(220))
-         .force("charge", d3.forceManyBody().strength(-600))
+         .force("link", d3.forceLink<Node, Link>(links).id((d: any) => d.id).distance(150).strength(0.05))
+         .force("charge", d3.forceManyBody().strength(-200))
          .force("center", d3.forceCenter(width / 2, height / 2))
          .force("collision", d3.forceCollide().radius(45));
 
       // 3. Zoom Handling
+      let currentTransform = transform;
       const zoom = d3.zoom<HTMLCanvasElement, unknown>()
          .scaleExtent([0.1, 5])
          .on("zoom", (event) => {
-            setTransform(event.transform);
+            currentTransform = event.transform;
+            setTransform(event.transform); // still update for buttons
          });
       d3.select(canvas).call(zoom);
 
-      // 4. Render Loop
-      simulation.on("tick", () => {
-         nodesRef.current = nodes; // KEEP REF SYNCED
+      // Track interaction states in refs to avoid useEffect triggers
+      const interactState = { hover: hoveredNode, select: selectedNode };
+
+      // 4. Render Loop (Decoupled with requestAnimationFrame so pulses never freeze)
+      nodesRef.current = nodes;
+      let animationFrameId: number;
+
+      const drawLoop = () => {
          if (!ctx) return;
          ctx.clearRect(0, 0, width, height);
          ctx.save();
-         ctx.translate(transform.x, transform.y);
-         ctx.scale(transform.k, transform.k);
+         ctx.translate(currentTransform.x, currentTransform.y);
+         ctx.scale(currentTransform.k, currentTransform.k);
 
          // Draw Links
          ctx.beginPath();
@@ -134,11 +145,6 @@ export default function Home() {
             const s = l.source as any;
             const t = l.target as any;
             ctx.moveTo(s.x, s.y);
-            // Curved path logic
-            const dx = t.x - s.x;
-            const dy = t.y - s.y;
-            const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
-            // Simple straight lines for canvas speed, or quadraticCurveTo for flair
             ctx.lineTo(t.x, t.y);
          });
          ctx.stroke();
@@ -160,7 +166,7 @@ export default function Home() {
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            pulse.p += 0.02; // Speed of pulse
+            pulse.p += 0.015; // Speed of pulse
          });
          pulsesRef.current = pulsesRef.current.filter(p => p.p < 1);
 
@@ -169,7 +175,7 @@ export default function Home() {
             ctx.beginPath();
             ctx.arc(n.x || 0, n.y || 0, n.type === 'core' ? 12 : 7, 0, 2 * Math.PI);
             ctx.fillStyle = n.type === 'core' ? '#ffffff' : (n.color || '#3b82f6');
-            ctx.shadowBlur = (hoveredNode?.id === n.id || selectedNode?.id === n.id) ? 15 : 0;
+            ctx.shadowBlur = (interactState.hover?.id === n.id || interactState.select?.id === n.id) ? 15 : 0;
             ctx.shadowColor = n.color || '#3b82f6';
             ctx.fill();
             ctx.shadowBlur = 0;
@@ -178,23 +184,28 @@ export default function Home() {
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 10px Inter';
             ctx.textAlign = 'center';
-            ctx.fillText(n.label || '', n.x || 0, (n.y || 0) + (n.type === 'core' ? 30 : -15));
+            ctx.fillText(n.label || '', n.x || 0, (n.y || 0) + -15);
          });
 
          ctx.restore();
-      });
+         animationFrameId = requestAnimationFrame(drawLoop);
+      };
+      
+      drawLoop();
 
       // 5. Interaction (Canvas logic)
       const handlePointer = (event: any, isClick: boolean) => {
          const [mx, my] = d3.pointer(event);
-         const transformedX = (mx - transform.x) / transform.k;
-         const transformedY = (my - transform.y) / transform.k;
+         const transformedX = (mx - currentTransform.x) / currentTransform.k;
+         const transformedY = (my - currentTransform.y) / currentTransform.k;
          const found = simulation.find(transformedX, transformedY, 20);
 
          if (isClick) {
+            interactState.select = found || null;
             setSelectedNode(found || null);
             setShowInspector(!!found);
          } else {
+            interactState.hover = found || null;
             setHoveredNode(found || null);
             setMousePos({ x: event.clientX, y: event.clientY });
          }
@@ -204,8 +215,11 @@ export default function Home() {
          .on("mousemove", (e) => handlePointer(e, false))
          .on("click", (e) => handlePointer(e, true));
 
-      return () => { simulation.stop(); };
-   }, [view, agentMetadata, isLive, transform, hoveredNode, selectedNode]);
+      return () => { 
+          simulation.stop();
+          cancelAnimationFrame(animationFrameId);
+      };
+   }, [view, agentMetadata, isLive]); // Removed dynamic react states from deps to stop re-init
 
    // Sync with Backend
    useEffect(() => {
@@ -239,12 +253,13 @@ export default function Home() {
                const res = await fetch(`${BACKEND_URL}/swarm/pulses`);
                const data = await res.json();
                if (data.pulses && data.pulses.length > 0) {
-                  // Add to Canvas Pulses
+                  // Add to Canvas Pulses (Mesh specific routing)
                   data.pulses.forEach((p: any) => {
-                     const targetName = p.agent_id;
+                     const sourceName = p.agent_id;
+                     const targetName = p.target_id;
                      const targetNode = nodesRef.current.find(n => n.id === targetName);
-                     const sourceNode = nodesRef.current.find(n => n.id === 'core');
-                     if (sourceNode && targetNode) {
+                     const sourceNode = nodesRef.current.find(n => n.id === sourceName);
+                     if (sourceNode && targetNode && sourceNode.id !== targetNode.id) {
                         pulsesRef.current.push({ s: sourceNode, t: targetNode, p: 0, id: `${p.agent_id}-${p.timestamp}` });
                      }
                   });
