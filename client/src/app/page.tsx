@@ -359,7 +359,7 @@ export default function Home() {
    }
 
    return (
-      <div className="agent-canvas h-screen relative overflow-hidden bg-[#fcfcfc]">
+      <div className="agent-canvas h-screen relative overflow-hidden bg-[#020617]">
          {/* 1. TOP NAV */}
          <div className="h-12 flex items-center justify-between px-10 z-50 pointer-events-none absolute w-full">
             <div className="flex items-center space-x-2 pointer-events-auto">
@@ -382,171 +382,177 @@ export default function Home() {
 
          {/* 3. FLOATING OVERLAYS */}
 
-         {/* Global Command Bar */}
-         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-full max-w-lg z-40 transition-all duration-500" style={{ transform: showInspector ? 'translateX(-80%)' : 'translateX(-50%)' }}>
-            <form onSubmit={triggerSwarm} className="glass-card flex items-center p-2 rounded-2xl border-white/80 shadow-2xl">
-               <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center ml-1">
-                  <ArrowRight className="w-3.5 h-3.5 text-white" />
+         {/* Premium Command Console */}
+         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-4xl z-40 transition-all duration-500" style={{ transform: showInspector ? 'translateX(-80%)' : 'translateX(-50%)' }}>
+            <form onSubmit={triggerSwarm} className="flex flex-col items-center">
+               {/* Glowing Input Container */}
+               <div className="w-full flex items-center p-3 rounded-2xl bg-slate-900/80 backdrop-blur-2xl border border-blue-500/30 shadow-[0_0_40px_rgba(59,130,246,0.15)] focus-within:shadow-[0_0_60px_rgba(59,130,246,0.3)] transition-all duration-500">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mr-3 border border-blue-500/20">
+                     <BrainCircuit className="w-5 h-5 text-blue-400 animate-pulse" />
+                  </div>
+                  <input
+                     value={input}
+                     onChange={(e) => setInput(e.target.value)}
+                     placeholder="Initialize Sovereign Simulation (e.g., 'Solve climate resource allocation')"
+                     className="flex-1 bg-transparent border-none outline-none px-4 text-sm font-bold text-slate-100 placeholder:text-slate-500 tracking-wide"
+                  />
+                  <button type="submit" disabled={!isLive || !input.trim()} className="bg-gradient-to-r from-blue-600 to-emerald-500 text-white px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] disabled:opacity-20 disabled:hover:scale-100">Engage Swarm</button>
                </div>
-               <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Insert Seed Reality..."
-                  className="flex-1 bg-transparent border-none outline-none px-4 text-[11px] font-bold text-slate-800 placeholder:text-slate-300"
-               />
-               <button type="submit" disabled={!isLive} className="bg-slate-900 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all disabled:opacity-20 active:scale-95">Engage</button>
             </form>
          </div>
 
-         {/* Zoom Toolbox */}
-         <div className="absolute top-20 right-10 flex flex-col gap-2 z-40">
-            <button onClick={() => handleZoom('in')} className="w-8 h-8 glass-card rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors"><Plus className="w-4 h-4" /></button>
-            <button onClick={() => handleZoom('out')} className="w-8 h-8 glass-card rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors"><Minus className="w-4 h-4" /></button>
-            <button onClick={() => handleZoom('reset')} className="w-8 h-8 glass-card rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-500 transition-colors"><Maximize2 className="w-4 h-4" /></button>
+         {/* Top Left Tools */}
+         <div className="absolute top-20 left-10 flex flex-col gap-3 z-40">
+            <div className="flex gap-2">
+               <button onClick={() => handleZoom('in')} className="w-10 h-10 bg-slate-900/50 backdrop-blur-md rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-400 border border-slate-700 hover:border-blue-500/50 transition-all shadow-lg"><Plus className="w-4 h-4" /></button>
+               <button onClick={() => handleZoom('out')} className="w-10 h-10 bg-slate-900/50 backdrop-blur-md rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-400 border border-slate-700 hover:border-blue-500/50 transition-all shadow-lg"><Minus className="w-4 h-4" /></button>
+               <button onClick={() => handleZoom('reset')} className="w-10 h-10 bg-slate-900/50 backdrop-blur-md rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-400 border border-slate-700 hover:border-blue-500/50 transition-all shadow-lg"><Maximize2 className="w-4 h-4" /></button>
+            </div>
             {sessionId && (
-               <button onClick={generateReport} className="mt-4 px-4 py-3 glass-card rounded-xl text-[10px] font-black uppercase tracking-widest text-[#0d6efd] hover:bg-[#0d6efd] hover:text-white transition-all shadow-lg border border-[#0d6efd]/30 whitespace-nowrap">Generate Report</button>
+               <button onClick={generateReport} className="mt-2 w-full py-4 bg-slate-900/80 backdrop-blur-xl rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#0d6efd] hover:bg-blue-600 hover:text-white transition-all shadow-[0_0_20px_rgba(13,110,253,0.15)] border border-blue-500/30 whitespace-nowrap">Extract Analysis</button>
             )}
          </div>
 
-
-         {/* Entity Legend */}
-         <div className="absolute bottom-10 left-10 p-5 glass-card rounded-2xl z-40">
-            <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Entity Map</h4>
-            <div className="space-y-2.5">
-               {[{ l: 'University', c: '#f97316' }, { l: 'Student', c: '#ef4444' }, { l: 'NGO', c: '#3b82f6' }, { l: 'NGO-Meta', c: '#8b5cf6' }].map((item) => (
-                  <div key={item.l} className="flex items-center gap-3">
-                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.c }} />
-                     <span className="text-[9px] font-bold text-slate-700 uppercase">{item.l}</span>
-                  </div>
-               ))}
-            </div>
-         </div>
-
-         {/* Interaction Feed */}
+         {/* Neural Telemetry Stream (Right Side) */}
          {!showInspector && (
-            <div className="absolute bottom-10 right-10 w-80 max-h-64 glass-card rounded-2xl overflow-hidden flex flex-col z-40 animate-in fade-in slide-in-from-right-5">
-               <div className="p-3 border-b border-white/20 bg-white/40 flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Interaction_Feed</span>
+            <div className="absolute top-20 bottom-32 right-10 w-96 bg-slate-900/60 backdrop-blur-xl rounded-3xl overflow-hidden flex flex-col z-40 border border-slate-700/50 shadow-2xl animate-in fade-in slide-in-from-right-5">
+               <div className="p-5 border-b border-slate-700/50 bg-slate-900/80 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <Network className="w-4 h-4 text-emerald-400" />
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-200">Swarm Telemetry</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse delay-75" />
+                  </div>
                </div>
-               <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-none" ref={scrollRef}>
-                  {messages.slice(-5).map((m) => (
-                     <div key={m.id} className="animate-in fade-in slide-in-from-bottom-2">
-                        <p className="text-[8px] font-black text-blue-500 uppercase tracking-tighter mb-0.5">{m.sender}</p>
-                        <p className="text-[10px] text-slate-600 leading-tight font-medium">{m.content}</p>
+               
+               <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-none" ref={scrollRef}>
+                  {messages.map((m) => {
+                     const isMeta = m.sender.includes('META') || m.sender.includes('CORE');
+                     return (
+                     <div key={m.id} className="animate-in fade-in slide-in-from-bottom-2 flex flex-col gap-1.5">
+                        <div className="flex justify-between items-center">
+                           <p className={`text-[9px] font-black uppercase tracking-widest ${isMeta ? 'text-emerald-400' : 'text-blue-400'}`}>{m.sender}</p>
+                           <p className="text-[8px] font-mono text-slate-500">{m.timestamp}</p>
+                        </div>
+                        <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/50">
+                           <p className="text-xs text-slate-300 leading-relaxed font-medium"><Typewriter text={m.content} /></p>
+                        </div>
                      </div>
-                  ))}
-                  {messages.length === 0 && <p className="text-[9px] text-slate-300 font-bold uppercase italic text-center p-4">Standby for pulses...</p>}
+                  )})}
+                  {messages.length === 0 && (
+                     <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+                        <div className="w-12 h-12 rounded-full border border-dashed border-slate-500 animate-[spin_10s_linear_infinite] mb-4" />
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Monitoring Frequencies...</p>
+                     </div>
+                  )}
                </div>
             </div>
          )}
 
          {/* --- NEURAL INSPECTOR (SIDEBAR) --- */}
-         <div className={`absolute top-0 right-0 h-full w-[400px] glass-card border-l border-white/40 z-50 transition-transform duration-500 ease-in-out flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.05)] ${showInspector ? 'translate-x-0' : 'translate-x-full'}`}>
+         <div className={`absolute top-0 right-0 h-full w-[450px] bg-slate-950/95 backdrop-blur-3xl border-l border-slate-800 z-50 transition-transform duration-500 ease-in-out flex flex-col shadow-[-30px_0_50px_rgba(0,0,0,0.5)] ${showInspector ? 'translate-x-0' : 'translate-x-full'}`}>
             {selectedNode && (
                <>
-                  <div className="p-8 border-b border-white/20">
+                  <div className="p-8 border-b border-slate-800/50">
                      <div className="flex justify-between items-start mb-6">
                         <div>
-                           <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: selectedNode.color || '#3b82f6' }} />
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Entity_Inspector</span>
+                           <div className="flex items-center gap-3 mb-2">
+                              <div className="w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: selectedNode.color || '#3b82f6', color: selectedNode.color || '#3b82f6' }} />
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Entity_Inspector</span>
                            </div>
-                           <h2 className="text-2xl font-black text-slate-800 tracking-tighter">{selectedNode.label}</h2>
+                           <h2 className="text-3xl font-black text-white tracking-tighter">{selectedNode.label}</h2>
                         </div>
-                        <button onClick={() => setShowInspector(false)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition-colors">
+                        <button onClick={() => setShowInspector(false)} className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-800 flex items-center justify-center transition-all">
                            <X className="w-5 h-5 text-slate-400" />
                         </button>
                      </div>
 
                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-                           <p className="text-[8px] font-black text-slate-400 uppercase mb-1">UUID</p>
-                           <p className="text-[11px] font-mono font-bold text-slate-700">{selectedNode.uuid}</p>
+                        <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800/50">
+                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Network ID</p>
+                           <p className="text-xs font-mono font-bold text-slate-200">{selectedNode.uuid}</p>
                         </div>
-                        <div className="p-3 bg-slate-50/50 rounded-xl border border-slate-100">
-                           <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Status</p>
-                           <p className="text-[11px] font-bold text-emerald-600 uppercase flex items-center gap-1">
-                              <Activity className="w-3 h-3" /> Synchronized
+                        <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800/50">
+                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Core Status</p>
+                           <p className="text-xs font-bold text-emerald-400 uppercase flex items-center gap-2">
+                              <Activity className="w-3.5 h-3.5" /> Nominal
                            </p>
                         </div>
                      </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-none">
+                  <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-none">
                      {/* Detailed Knowledge stream */}
                      <div>
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                           <MessageSquare className="w-3 h-3" /> Agent_Thinking_Stream
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-5 flex items-center gap-3">
+                           <MessageSquare className="w-4 h-4 text-slate-400" /> Thought Processing
                         </h4>
                         <div className="space-y-4">
                            {messages.filter(m => m.sender.includes(selectedNode.id.toUpperCase())).slice(-10).reverse().map((m) => (
-                              <div key={m.id} className="p-4 bg-white/60 rounded-2xl border border-white shadow-sm">
-                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-[8px] font-black text-blue-500 uppercase">{m.timestamp}</span>
-                                    <div className="flex gap-1">
-                                       <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                       <div className="w-1 h-1 rounded-full bg-slate-200" />
+                              <div key={m.id} className="p-5 bg-slate-900/40 rounded-2xl border border-slate-800/50 shadow-lg">
+                                 <div className="flex justify-between items-center mb-3">
+                                    <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">{m.timestamp}</span>
+                                    <div className="flex gap-1.5">
+                                       <div className="w-1 h-1 rounded-full bg-slate-600" />
+                                       <div className="w-1 h-1 rounded-full bg-slate-600" />
                                     </div>
                                  </div>
-                                 <p className="text-[11px] text-slate-600 leading-relaxed font-medium"><Typewriter text={m.content} /></p>
+                                 <p className="text-[13px] text-slate-300 leading-relaxed font-medium"><Typewriter text={m.content} /></p>
                               </div>
                            ))}
                            {messages.filter(m => m.sender.includes(selectedNode.id.toUpperCase())).length === 0 && (
-                              <p className="text-[10px] text-slate-300 font-bold uppercase italic py-10 text-center">No active pulses detected.</p>
+                              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest py-10 text-center">No neural signature.</p>
                            )}
                         </div>
                      </div>
 
                      {/* Relational Facts */}
                      <div>
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                           <Database className="w-3 h-3" /> Relational_State
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-5 flex items-center gap-3">
+                           <Database className="w-4 h-4 text-slate-400" /> Relational State
                         </h4>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                            {selectedNode.type === 'agent' && [
-                              { label: 'Link Fidelity', value: '0.982' },
-                              { label: 'Cluster Rank', value: '#1' },
-                              { label: 'Latency', value: '14ms' }
+                              { label: 'Entanglement Freq', value: '1.4 GHz' },
+                              { label: 'Topology Vector', value: '[0.5, -0.2]' },
+                              { label: 'Packet Latency', value: '3ms' }
                            ].map(stat => (
-                              <div key={stat.label} className="flex justify-between items-center border-b border-slate-100 pb-2">
-                                 <span className="text-[10px] font-bold text-slate-500 uppercase">{stat.label}</span>
-                                 <span className="text-[10px] font-mono font-black text-slate-800">{stat.value}</span>
+                              <div key={stat.label} className="flex justify-between items-center border-b border-slate-800/50 pb-3">
+                                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{stat.label}</span>
+                                 <span className="text-[11px] font-mono font-black text-slate-200">{stat.value}</span>
                               </div>
                            ))}
                         </div>
                      </div>
                   </div>
 
-                  <div className="p-8 bg-slate-50/50 border-t border-white/20">
-                     <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <Clock className="w-3.5 h-3.5" /> Replay Agent History
-                     </button>
-                  </div>
                </>
             )}
          </div>
 
          {/* --- REPORT MODAL --- */}
          {showReport && (
-            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-10 animate-in fade-in">
-               <div className="bg-white rounded-3xl w-full max-w-4xl h-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden border border-white/20">
-                  <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                           <Database className="w-5 h-5 text-blue-600" />
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-10 animate-in fade-in">
+               <div className="bg-slate-900 rounded-3xl w-full max-w-4xl h-full max-h-[85vh] flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden border border-slate-700">
+                  <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                     <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                           <Database className="w-6 h-6 text-blue-400" />
                         </div>
                         <div>
-                           <h3 className="text-xl font-black text-slate-800 tracking-tight">Sovereign Swarm Report</h3>
-                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">UUID: {sessionId}</p>
+                           <h3 className="text-2xl font-black text-white tracking-tight">Sovereign Analytical Output</h3>
+                           <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-500 mt-1">UUID: {sessionId}</p>
                         </div>
                      </div>
-                     <button onClick={() => setShowReport(false)} className="w-10 h-10 rounded-xl hover:bg-slate-200 flex items-center justify-center transition-colors">
-                        <X className="w-5 h-5 text-slate-500" />
+                     <button onClick={() => setShowReport(false)} className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 hover:bg-slate-700 flex items-center justify-center transition-all">
+                        <X className="w-6 h-6 text-slate-300" />
                      </button>
                   </div>
-                  <div className="flex-1 overflow-y-auto p-10 bg-[#fcfcfc] scrollbar-none">
-                     <div className="prose prose-sm prose-slate max-w-none">
-                        <pre className="font-mono text-xs whitespace-pre-wrap text-slate-700 bg-transparent p-0 m-0 border-none leading-relaxed">
+                  <div className="flex-1 overflow-y-auto p-12 bg-slate-900 scrollbar-none">
+                     <div className="prose prose-invert prose-base max-w-none">
+                        <pre className="font-mono text-sm whitespace-pre-wrap text-emerald-400 bg-black/40 p-8 rounded-2xl border border-slate-800 leading-relaxed shadow-inner">
                            {reportContent}
                         </pre>
                      </div>
@@ -558,14 +564,14 @@ export default function Home() {
          {/* --- NODE HOVER TOOLTIP --- */}
          {hoveredNode && !showInspector && (
             <div
-               className="fixed z-[150] pointer-events-none p-3 glass-card rounded-xl border border-white/50 shadow-xl"
+               className="fixed z-[150] pointer-events-none p-4 bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-2xl"
                style={{ left: mousePos.x + 15, top: mousePos.y + 15 }}
             >
-               <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: hoveredNode.color || '#3b82f6' }} />
-                  <span className="text-[10px] font-black text-slate-800 uppercase">{hoveredNode.label}</span>
+               <div className="flex items-center gap-3 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: hoveredNode.color || '#3b82f6', color: hoveredNode.color || '#3b82f6' }} />
+                  <span className="text-[11px] font-black text-white uppercase tracking-wider">{hoveredNode.label}</span>
                </div>
-               <p className="text-[8px] font-mono text-slate-400">{hoveredNode.uuid}</p>
+               <p className="text-[9px] font-mono text-slate-500">{hoveredNode.uuid}</p>
             </div>
          )}
       </div>
