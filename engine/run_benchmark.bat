@@ -7,7 +7,7 @@ if not exist "%VCS_PATH%" (
 
 call "%VCS_PATH%" x64 > nul 2>&1
 echo [1/2] Compiling Swarm Benchmark...
-nvcc -O3 -w sovereign_v12_titan_swarm.cu -o swarm_benchmark.exe 2> compile_errors.txt
+nvcc -O3 -w swarm_v12_swarm_swarm.cu -o swarm_benchmark.exe 2> compile_errors.txt
 
 if %ERRORLEVEL% EQU 0 (
     echo [2/2] Running Benchmark...

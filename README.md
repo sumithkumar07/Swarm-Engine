@@ -1,13 +1,13 @@
-# Sovereign Swarm | 1.5M Parameter Local Inference Engine
+# Swarm-Engine | 1.5M Parameter Local Inference Engine
 
 **A 1.5M param local inference engine in C++/CUDA, runs on consumer hardware.**
 
-Sovereign is a high-performance, 1.5M parameter neural core designed for true on-device autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Neural Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
+Swarm-Engine is a high-performance, 1.5M parameter neural core designed for true on-device autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Neural Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
 
 ---
 
 ## ⚡ Proof of Work: Terminal Inference Trace
-Below is a raw trace of the **Sovereign C++ Engine** processing a command between agents.
+Below is a raw trace of the **Swarm-Engine C++ Core** processing a command between agents.
 
 ```text
 [00:00:00.004] [INIT] 1,532,472 Parameters allocated across 4 CUDA streams.
@@ -48,7 +48,7 @@ npm run dev
 ```bash
 # Requires CUDA 12.0+
 cd engine
-./run_v12_titan.bat
+./run_v12_swarm.bat
 ```
 
 ---

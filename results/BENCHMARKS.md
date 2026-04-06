@@ -30,7 +30,7 @@ This report provides technical proof of the Swarm-Engine's efficiency on consume
 ---
 
 ## 🧠 Memory Topology
-The 1.5M parameter core utilizes a **Clifford-initialized memory manifold**, ensuring that weights are stored in a contiguous 64-bit buffer. This reduces L3 cache misses by >90% compared to standard tensor-based inference engines.
+The 1.5M parameter core utilizes a **Clifford-initialized memory core**, ensuring that weights are stored in a contiguous 64-bit buffer. This reduces L3 cache misses by >90% compared to standard tensor-based inference engines.
 
 ---
 

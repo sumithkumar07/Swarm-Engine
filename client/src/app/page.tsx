@@ -99,7 +99,7 @@ export default function Home() {
             label: agent.name,
             type: 'agent',
             color: colors[i % colors.length],
-            uuid: `TITAN_NEURAL_${i.toString().padStart(3, '0')}`,
+            uuid: `SWARM_NEURAL_${i.toString().padStart(3, '0')}`,
             x: width / 2 + (Math.random() - 0.5) * 600,
             y: height / 2 + (Math.random() - 0.5) * 400
          });
@@ -372,7 +372,7 @@ export default function Home() {
          setMessages(prev => [...prev, {
             id: 'sys-error',
             sender: 'SYSTEM',
-            content: 'Connection to Sovereign Engine failed. The HuggingFace Space may be sleeping — please wait 30s and retry.',
+            content: 'Connection to Swarm-Engine failed. The HuggingFace Space may be sleeping — please wait 30s and retry.',
             timestamp: new Date().toLocaleTimeString()
          }]);
       } finally {
@@ -411,7 +411,7 @@ export default function Home() {
             <header className="px-12 py-8 flex justify-between items-center max-w-7xl mx-auto w-full">
                <div className="flex items-center space-x-3">
                   <BrainCircuit className="w-8 h-8 text-[#0d6efd]" />
-                  <span className="font-bold text-xl tracking-tight uppercase">Sovereign</span>
+                  <span className="font-bold text-xl tracking-tight uppercase">Swarm-Engine</span>
                </div>
                <nav className="flex items-center space-x-8 text-sm font-semibold text-slate-500">
                   <a href="#" className="hover:text-slate-900 transition-colors">Technology</a>
@@ -437,7 +437,7 @@ export default function Home() {
          <div className="h-12 flex items-center justify-between px-10 z-50 pointer-events-none absolute w-full">
             <div className="flex items-center space-x-2 pointer-events-auto">
                <div className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse' : 'bg-red-400'}`} />
-               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{isLive ? 'Sovereign_Swarm_v1.5 — LIVE' : 'Sovereign_Swarm — CONNECTING...'}</span>
+               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{isLive ? 'Swarm-Engine_v1.5 — LIVE' : 'Swarm-Engine — CONNECTING...'}</span>
             </div>
             <button
                onClick={() => setView('landing')}
@@ -619,7 +619,7 @@ export default function Home() {
                            <Database className="w-6 h-6 text-[#0d6efd]" />
                         </div>
                         <div>
-                           <h3 className="text-2xl font-black text-slate-900 tracking-tight">Sovereign Analytical Output</h3>
+                           <h3 className="text-2xl font-black text-slate-900 tracking-tight">Swarm-Engine Analytical Output</h3>
                            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400 mt-1">UUID: {sessionId}</p>
                         </div>
                      </div>

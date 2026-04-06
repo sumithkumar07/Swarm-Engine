@@ -10,10 +10,10 @@ if not exist "%VC_PATH%" (
 echo [DEBUG] Initializing MSVC Environment...
 call "%VC_PATH%" x64
 
-echo [DEBUG] Building Sovereign Titan V10 (CUDA)...
+echo [DEBUG] Building swarm swarm V10 (CUDA)...
 nvcc -O3 -arch=sm_75 --allow-unsupported-compiler ^
     -ccbin "%MSVC_BIN%" ^
-    sovereign_v10_cuda.cu tokenizer.cpp ^
+    swarm_v10_cuda.cu tokenizer.cpp ^
     -o train_v10_cuda.exe
 
 if %ERRORLEVEL% NEQ 0 (

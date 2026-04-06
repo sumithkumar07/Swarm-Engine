@@ -1,6 +1,6 @@
-# Sovereign Swarm Architecture
+# Swarm Architecture
 
-The Sovereign Swarm (V1.51) is a **Multi-Agent Inference Engine** designed for autonomous execution on local hardware. Unlike standard sequential chains, Sovereign operates as a coordinated neural network.
+The Swarm-Engine (V1.51) is a **Multi-Agent Inference Engine** designed for autonomous execution on local hardware. Unlike standard sequential chains, Swarm-Engine operates as a coordinated neural network.
 
 ## 🌩️ Quad-Agent Ecosystem
 
@@ -31,7 +31,7 @@ The swarm is orchestrated across four specialized **Neural Agents**, each mainta
 ## 🏗️ Hardware-Native Infrastructure
 
 ### 64-bit Memory Bridge
-The engine implements a hardened C++ native bridge that bypasses standard Python overhead. This allows the Next.js workbench to communicate directly with the local CUDA cores with sub-millisecond latency.
+The engine implements a hardened C++ native bridge that bypasses standard Python overhead. This allows the Swarm Workbench to communicate directly with the local CUDA cores with sub-millisecond latency.
 
 ### The Clifford Initialization
 To handle 1.5M parameters locally without divergence, we implement a **Clifford Initializer.** This ensures that every weight interaction respects the anti-commutative rules of geometric algebra, preventing the "vanishing gradient" problem common in local model experiments.
@@ -39,4 +39,4 @@ To handle 1.5M parameters locally without divergence, we implement a **Clifford 
 ---
 
 ## 🔒 Security & Privacy
-Sovereign is built for **Local Autonomy.** All internal states are stored in local 64-bit buffers. No data ever leaves your device, reaching **100% Data Isolation.**
+Swarm-Engine is built for **Local Autonomy.** All internal states are stored in local 64-bit buffers. No data ever leaves your device, reaching **100% Data Isolation.**

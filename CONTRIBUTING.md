@@ -1,6 +1,6 @@
-# Contributing to Sovereign Swarm
+# Contributing to swarm Swarm
 
-We welcome contributions to the Sovereign Swarm (V1.51). As a high-performance neural project, we maintain strict standards for code quality and mathematical sincerity.
+We welcome contributions to the swarm Swarm (V1.51). As a high-performance neural project, we maintain strict standards for code quality and mathematical sincerity.
 
 ## 🌩️ Contribution Areas
 

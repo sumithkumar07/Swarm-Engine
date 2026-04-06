@@ -15,19 +15,19 @@ void softmax3(double* input, double* output) {
     for(int i=0; i<3; i++) output[i] /= sum;
 }
 
-struct SovereignCache {
+struct swarmCache {
     double in[3], f1[3], f2[3], inter[3], score[3], alpha[3], y_att;
     double ff_in[19]; // 3 current + 4 slots * 4 dims
     double z1[32], a1[32], y_feat_raw;
     double y_squashed;
 };
 
-struct SovereignBlock {
+struct swarmBlock {
     static const int HEADS = 3, STM_SIZE = 4, DIM_PER_SLOT = 4, HIDDEN = 32, FFN_IN = 3 + STM_SIZE * DIM_PER_SLOT;
     double wA[HEADS][3], wB[HEADS][3], wS[HEADS][3], w1[HIDDEN][FFN_IN], b1[HIDDEN], w_feat[HIDDEN], b_feat;
     double grad_wA[HEADS][3], grad_wB[HEADS][3], grad_wS[HEADS][3], grad_w1[HIDDEN][FFN_IN], grad_b1[HIDDEN], grad_w_feat[HIDDEN], grad_b_feat;
 
-    SovereignBlock() {
+    swarmBlock() {
         std::mt19937 gen(42); std::uniform_real_distribution<double> dis(-0.05, 0.05);
         for(int k=0; k<HEADS; k++) for(int j=0; j<3; j++) { wA[k][j]=dis(gen); wB[k][j]=dis(gen); wS[k][j]=dis(gen); }
         for(int i=0; i<HIDDEN; i++) { b1[i]=0.01; w_feat[i]=dis(gen); for(int j=0; j<FFN_IN; j++) w1[i][j]=dis(gen); }
@@ -38,8 +38,8 @@ struct SovereignBlock {
         for(int i=0; i<HIDDEN; i++) { grad_b1[i]=grad_w_feat[i]=0; for(int j=0; j<FFN_IN; j++) grad_w1[i][j]=0; }
         grad_b_feat=0;
     }
-    SovereignCache forward(double* in, double stm[4][4], int stm_ptr) {
-        SovereignCache c; for(int j=0; j<3; j++) c.in[j]=in[j];
+    swarmCache forward(double* in, double stm[4][4], int stm_ptr) {
+        swarmCache c; for(int j=0; j<3; j++) c.in[j]=in[j];
         for(int k=0; k<HEADS; k++) {
             c.f1[k]=c.f2[k]=c.score[k]=0;
             for(int j=0; j<3; j++) { c.f1[k]+=wA[k][j]*in[j]; c.f2[k]+=wB[k][j]*in[j]; c.score[k]+=wS[k][j]*in[j]; }
@@ -59,7 +59,7 @@ struct SovereignBlock {
         c.y_feat_raw=b_feat; for(int i=0; i<HIDDEN; i++) c.y_feat_raw+=c.a1[i]*w_feat[i];
         c.y_squashed = c.y_feat_raw / (1.0 + std::abs(c.y_feat_raw)); return c;
     }
-    void backward(const SovereignCache& c, double dL_dy_squashed, double* dL_da1_inj, double* dL_din, double* dL_dff_in_out) {
+    void backward(const swarmCache& c, double dL_dy_squashed, double* dL_da1_inj, double* dL_din, double* dL_dff_in_out) {
         double dL_dy_raw = dL_dy_squashed / std::pow(1.0 + std::abs(c.y_feat_raw), 2);
         grad_b_feat+=dL_dy_raw; double dL_da1[HIDDEN];
         for(int i=0; i<HIDDEN; i++) { 
@@ -102,21 +102,21 @@ struct SovereignBlock {
 };
 
 int main() {
-    SovereignBlock b; double w_f=0.5, b_f=0, g_wf=0, g_bf=0;
+    swarmBlock b; double w_f=0.5, b_f=0, g_wf=0, g_bf=0;
     std::mt19937 gen(1337); 
     int DELAY = 4;
-    std::cout << "--- SOVEREIGN v3.3 (RICH MEMORY RANDOM STRESS: ECHO-" << DELAY << ") ---\n\n";
+    std::cout << "--- swarm v3.3 (RICH MEMORY RANDOM STRESS: ECHO-" << DELAY << ") ---\n\n";
     double lr=0.01;
     for(int epoch=0; epoch<5001; epoch++) {
         std::vector<double> seq; for(int i=0; i<100; i++) seq.push_back((gen()%2==0)?0.5:-0.5);
-        double tl=0; std::vector<SovereignCache> batch; double stm[4][4]; for(int i=0; i<4; i++) for(int d=0; d<4; d++) stm[i][d]=0;
+        double tl=0; std::vector<swarmCache> batch; double stm[4][4]; for(int i=0; i<4; i++) for(int d=0; d<4; d++) stm[i][d]=0;
         int ptr=0;
         
         // Inspection metrics
         double slot_grads[4] = {0,0,0,0};
         int grad_count = 0;
         for(int t=0; t<seq.size(); t++) {
-            double in[3]={seq[t],0,0}; SovereignCache c=b.forward(in, stm, ptr); batch.push_back(c);
+            double in[3]={seq[t],0,0}; swarmCache c=b.forward(in, stm, ptr); batch.push_back(c);
             stm[ptr][0]=c.y_squashed; stm[ptr][1]=c.a1[0]; stm[ptr][2]=c.a1[1]; stm[ptr][3]=c.a1[2];
             ptr=(ptr+1)%4;
         }
@@ -157,7 +157,7 @@ int main() {
     std::vector<double> f_seq; for(int i=0; i<20; i++) f_seq.push_back((gen()%2==0)?0.5:-0.5);
     double stm_f[4][4]; for(int i=0; i<4; i++) for(int d=0; d<4; d++) stm_f[i][d]=0; int ptr_f=0;
     for(int t=0; t<f_seq.size(); t++) {
-        double in[3]={f_seq[t],0,0}; SovereignCache c=b.forward(in, stm_f, ptr_f);
+        double in[3]={f_seq[t],0,0}; swarmCache c=b.forward(in, stm_f, ptr_f);
         double p=b_f+c.y_squashed*w_f; double tar=(t>=DELAY)?f_seq[t-DELAY]:0;
         std::cout << "T=" << std::setw(2) << t << " | In: " << std::setw(4) << f_seq[t] << " | Target: " << std::setw(4) << tar << " | Pred: " << std::setw(6) << p << "\n";
         stm_f[ptr_f][0]=c.y_squashed; stm_f[ptr_f][1]=c.a1[0]; stm_f[ptr_f][2]=c.a1[1]; stm_f[ptr_f][3]=c.a1[2];

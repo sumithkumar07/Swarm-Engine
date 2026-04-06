@@ -1,5 +1,5 @@
 """
-Sovereign V10 Training Data Preparation
+swarm V10 Training Data Preparation
 ========================================
 Downloads public domain English text, cleans it, builds vocabulary,
 and prepares training data for the Master Brain.
@@ -77,7 +77,7 @@ def build_vocab(text, max_vocab=5000):
 
 def main():
     print("=" * 60)
-    print("SOVEREIGN V10 — TRAINING DATA PREPARATION")
+    print("swarm V10 — TRAINING DATA PREPARATION")
     print("=" * 60)
 
     # Step 1: Download texts

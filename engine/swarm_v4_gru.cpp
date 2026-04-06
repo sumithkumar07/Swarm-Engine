@@ -18,7 +18,7 @@ static const int FFN_IN = 1 + H_DIM; // [x, h[0..23]] = 25
 static const int HIDDEN = 32;
 
 // --- CACHE ---
-struct SovereignCache {
+struct swarmCache {
     double gru_in[GRU_IN], concat_zh[GRU_CONCAT];
     double pre_z[H_DIM], z[H_DIM];          // update gate
     double pre_r[H_DIM], r[H_DIM];          // reset gate
@@ -29,8 +29,8 @@ struct SovereignCache {
     double ff_in[FFN_IN], z1[HIDDEN], a1[HIDDEN], y_feat_raw, y_squashed;
 };
 
-// --- SOVEREIGN BLOCK v4.2 (PURE GRU + HIGHWAY) ---
-struct SovereignBlock {
+// --- swarm BLOCK v4.2 (PURE GRU + HIGHWAY) ---
+struct swarmBlock {
     // GRU Gates (clean, no bloat)
     double W_z[H_DIM][GRU_CONCAT], b_z[H_DIM]; // update gate
     double W_r[H_DIM][GRU_CONCAT], b_r[H_DIM]; // reset gate
@@ -46,7 +46,7 @@ struct SovereignBlock {
     double grad_w1[HIDDEN][FFN_IN], grad_b1[HIDDEN], grad_w_feat[HIDDEN], grad_b_feat;
     double grad_w_read[H_DIM];
 
-    SovereignBlock() {
+    swarmBlock() {
         std::mt19937 gen(42);
         std::uniform_real_distribution<double> dis(-0.05, 0.05);
         for(int i=0;i<H_DIM;i++) {
@@ -68,8 +68,8 @@ struct SovereignBlock {
         grad_b_feat=0;
     }
 
-    SovereignCache forward(double x, double* h_state) {
-        SovereignCache c;
+    swarmCache forward(double x, double* h_state) {
+        swarmCache c;
         // 1. GRU Update
         c.gru_in[0]=x;
         for(int i=0;i<H_DIM;i++) c.h_prev[i]=h_state[i];
@@ -123,7 +123,7 @@ struct SovereignBlock {
     }
 
     // Backward: takes dL/dy_squashed + dL/dh_new (from future), returns dL/dh_prev (for BPTT)
-    void backward(const SovereignCache& c, double dL_dy_squashed, double* dL_dh_inject, double* dL_dh_prev_out) {
+    void backward(const swarmCache& c, double dL_dy_squashed, double* dL_dh_inject, double* dL_dh_prev_out) {
         // --- FFN Backward ---
         double dL_dy_raw = dL_dy_squashed / std::pow(1.0+std::abs(c.y_feat_raw),2);
         grad_b_feat+=dL_dy_raw;
@@ -224,24 +224,24 @@ struct SovereignBlock {
 };
 
 int main() {
-    SovereignBlock b;
+    swarmBlock b;
     double w_f=0.5, b_f=0, g_wf=0, g_bf=0;
     std::mt19937 gen(1337);
     int DELAY = 12;
 
-    std::cout << "--- SOVEREIGN v4.2 (PURE PURE GRU ABLATED: ECHO-" << DELAY << ") ---\n";
+    std::cout << "--- swarm v4.2 (PURE PURE GRU ABLATED: ECHO-" << DELAY << ") ---\n";
     std::cout << "Parameters: " << b.count_params()+2 << "\n";
     std::cout << "Hidden State: " << H_DIM << "D | FFN Input: " << FFN_IN << "\n\n";
 
     double lr=0.01;
     for(int epoch=0; epoch<40001; epoch++) { // Run for 40k epochs since Echo-12 is hard
         std::vector<double> seq; for(int i=0;i<100;i++) seq.push_back((gen()%2==0)?0.5:-0.5);
-        double tl=0; std::vector<SovereignCache> batch;
+        double tl=0; std::vector<swarmCache> batch;
         double h_state[H_DIM]; for(int i=0;i<H_DIM;i++) h_state[i]=0;
 
         // Forward
         for(int t=0;t<(int)seq.size();t++) {
-            SovereignCache c=b.forward(seq[t], h_state);
+            swarmCache c=b.forward(seq[t], h_state);
             batch.push_back(c);
         }
 
@@ -277,7 +277,7 @@ int main() {
     std::vector<double> f_seq; for(int i=0;i<30;i++) f_seq.push_back((gen()%2==0)?0.5:-0.5);
     double h_f[H_DIM]; for(int i=0;i<H_DIM;i++) h_f[i]=0;
     for(int t=0;t<(int)f_seq.size();t++) {
-        SovereignCache c=b.forward(f_seq[t], h_f);
+        swarmCache c=b.forward(f_seq[t], h_f);
         double p=b_f+c.y_squashed*w_f;
         double tar=(t>=DELAY)?f_seq[t-DELAY]:0;
         std::cout << "T=" << std::setw(2) << t << " | In: " << std::setw(4) << f_seq[t] << " | Target: " << std::setw(4) << tar << " | Pred: " << std::setw(8) << p << "\n";

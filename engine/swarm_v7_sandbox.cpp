@@ -26,12 +26,12 @@ static const int GRU_CONCAT = GRU_IN + H_DIM; // 72
 static const int FFN_IN = EMBED_DIM + H_DIM; // 72
 static const int HIDDEN = 64;
 
-struct SovereignCache {
+struct swarmCache {
     int input_char;
     double probs[VOCAB];
 };
 
-struct SovereignInferenceBlock {
+struct swarmInferenceBlock {
     double W_embed[VOCAB][EMBED_DIM];
     double W_z[H_DIM][GRU_CONCAT], b_z[H_DIM];
     double W_r[H_DIM][GRU_CONCAT], b_r[H_DIM];
@@ -40,7 +40,7 @@ struct SovereignInferenceBlock {
     double W_out[VOCAB][HIDDEN], b_out[VOCAB];
     std::mt19937 gen;
 
-    SovereignInferenceBlock(int seed) : gen(seed) {
+    swarmInferenceBlock(int seed) : gen(seed) {
         std::uniform_real_distribution<double> dis(-0.05, 0.05);
         for(int v=0; v<VOCAB; v++) {
             b_out[v] = 0;
@@ -59,8 +59,8 @@ struct SovereignInferenceBlock {
         }
     }
 
-    SovereignCache forward(int x, double* h_state) {
-        SovereignCache c; c.input_char = x;
+    swarmCache forward(int x, double* h_state) {
+        swarmCache c; c.input_char = x;
         double embed[EMBED_DIM]; for(int d=0; d<EMBED_DIM; d++) embed[d] = W_embed[x][d];
         double concat_zh[GRU_CONCAT], concat_r[GRU_CONCAT];
         for(int i=0; i<EMBED_DIM; i++) { concat_zh[i] = embed[i]; concat_r[i] = embed[i]; }
@@ -111,14 +111,14 @@ struct SovereignInferenceBlock {
 // MIROFISH SIMULATION SCALING:
 // ----------------------------------------------------
 
-class SovereignAgent {
+class swarmAgent {
 public:
     std::string name;
-    SovereignInferenceBlock brain;
+    swarmInferenceBlock brain;
     double h_state[H_DIM];
     std::uniform_real_distribution<double> dist_samp;
 
-    SovereignAgent(std::string name, int brain_seed) 
+    swarmAgent(std::string name, int brain_seed) 
         : name(name), brain(brain_seed), dist_samp(0.0, 1.0) {
         
         // Zero the personal memory
@@ -138,7 +138,7 @@ public:
         int curr = ' '; // Seed with space
         
         for(int step=0; step<max_chars; step++) {
-            SovereignCache c = brain.forward(curr, h_state);
+            swarmCache c = brain.forward(curr, h_state);
             
             double sum = 0;
             double scaled_probs[VOCAB];
@@ -184,15 +184,15 @@ public:
 };
 
 int main() {
-    std::cout << "--- STAGE 3: SOVEREIGN V7 SOCIAL SANDBOX ---\n";
+    std::cout << "--- STAGE 3: swarm V7 SOCIAL SANDBOX ---\n";
     std::cout << "[INFO] Initializing C++ Environment inspired by MiroFish.\n";
     std::cout << "[INFO] Allocating Swarm Intel...\n";
 
-    std::vector<SovereignAgent*> swarm;
-    swarm.push_back(new SovereignAgent("Agent Alpha", 101));
-    swarm.push_back(new SovereignAgent("Agent Beta",  202));
-    swarm.push_back(new SovereignAgent("Agent Gamma", 303));
-    swarm.push_back(new SovereignAgent("Agent Delta", 404));
+    std::vector<swarmAgent*> swarm;
+    swarm.push_back(new swarmAgent("Agent Alpha", 101));
+    swarm.push_back(new swarmAgent("Agent Beta",  202));
+    swarm.push_back(new swarmAgent("Agent Gamma", 303));
+    swarm.push_back(new swarmAgent("Agent Delta", 404));
     
     // Inject "System Prompts" to isolate their identities contextually
     swarm[0]->observe("You are Agent Alpha. Proceed.");
@@ -214,7 +214,7 @@ int main() {
         
         // Randomly pick an active agent
         int active_idx = sim_gen() % swarm.size();
-        SovereignAgent* agent = swarm[active_idx];
+        swarmAgent* agent = swarm[active_idx];
         
         // Agent reads the global post (This acts as the agent's Perception)
         std::string latest_event = timeline.get_latest();

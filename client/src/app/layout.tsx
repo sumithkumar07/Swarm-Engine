@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sovereign | 1.5M Parameter Local Engine",
+  title: "Swarm-Engine | 1.5M Parameter Local Engine",
   description: "Privacy-focused, 1.5M parameter local inference engine.",
 };
 

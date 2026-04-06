@@ -12,7 +12,7 @@ import uuid
 from collections import deque
 import uvicorn
 
-app = FastAPI(title="Sovereign Swarm Intelligence API")
+app = FastAPI(title="Swarm-Engine Intelligence API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,13 +23,13 @@ app.add_middleware(
 )
 
 # --- LOAD NATIVE C++ ENGINE ---
-LIB_PATH = os.path.join(os.path.dirname(__file__), "libsovereign.so")
+LIB_PATH = os.path.join(os.path.dirname(__file__), "libswarm.so")
 
 # Fallback for Windows local testing
 if os.name == 'nt':
-    LIB_PATH = os.path.join(os.path.dirname(__file__), "sovereign.dll")
+    LIB_PATH = os.path.join(os.path.dirname(__file__), "swarm.dll")
 
-class SovereignAPI:
+class SwarmEngineAPI:
     def __init__(self):
         self.lib = None
         self.master_brain = None
@@ -45,23 +45,23 @@ class SovereignAPI:
             # --- STRICT FUNCTION SIGNATURES (64-BIT COMPATIBLE) ---
             
             # Brain Factory
-            self.lib.sovereign_init_master.argtypes = []
-            self.lib.sovereign_init_master.restype = ctypes.c_void_p
+            self.lib.swarm_init_master.argtypes = []
+            self.lib.swarm_init_master.restype = ctypes.c_void_p
             
             # Agent Factory
-            self.lib.sovereign_init_agent.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_int]
-            self.lib.sovereign_init_agent.restype = ctypes.c_void_p
+            self.lib.swarm_init_agent.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_int]
+            self.lib.swarm_init_agent.restype = ctypes.c_void_p
             
             # Observation
-            self.lib.sovereign_agent_observe.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
-            self.lib.sovereign_agent_observe.restype = None
+            self.lib.swarm_agent_observe.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+            self.lib.swarm_agent_observe.restype = None
             
             # Action/Inference
-            self.lib.sovereign_agent_act.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_double]
-            self.lib.sovereign_agent_act.restype = ctypes.c_char_p
+            self.lib.swarm_agent_act.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_double]
+            self.lib.swarm_agent_act.restype = ctypes.c_char_p
             
             # Initialize Global Brain
-            self.master_brain = self.lib.sovereign_init_master()
+            self.master_brain = self.lib.swarm_init_master()
             
             if not self.master_brain:
                 print("[ERROR] Master Brain allocation failed (Memory?).")
@@ -106,18 +106,18 @@ class SovereignAPI:
                 for i, p in enumerate(active_p):
                     name = p["name"]
                     persona = p["personality"]
-                    ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 1000 * (i+1))
+                    ptr = self.lib.swarm_init_agent(name.encode('utf-8'), self.master_brain, 1000 * (i+1))
                     if ptr:
                         self.agents[name] = ptr
                         obs = f"My name is {name}. My role is: {persona}"
-                        self.lib.sovereign_agent_observe(ptr, obs.encode('utf-8'))
+                        self.lib.swarm_agent_observe(ptr, obs.encode('utf-8'))
             except Exception as pe:
                 print(f"[ERROR] Personalities failed: {pe}. Using emergency Alpha-Delta fallback.")
                 for i, name in enumerate(["Alpha", "Beta", "Delta", "Gamma"]):
-                    ptr = self.lib.sovereign_init_agent(name.encode('utf-8'), self.master_brain, 100 * (i+1))
+                    ptr = self.lib.swarm_init_agent(name.encode('utf-8'), self.master_brain, 100 * (i+1))
                     if ptr: self.agents[name] = ptr
             
-            print(f"[SUCCESS] Sovereign Swarm Engine Loaded: {len(self.agents)} agents active.")
+            print(f"[SUCCESS] Swarm-Engine Loaded: {len(self.agents)} agents active.")
         except Exception as e:
             print(f"[ERROR] Critical Bridge Failure: {e}")
             self.lib = None
@@ -129,14 +129,14 @@ class SovereignAPI:
         
         print("[CLEANUP] Freeing 100 Agent States...")
         for name, ptr in self.agents.items():
-            self.lib.sovereign_free_agent(ptr)
+            self.lib.swarm_free_agent(ptr)
         
         if self.master_brain:
             print("[CLEANUP] Deallocating 1.5M Parameter Neural Core...")
-            self.lib.sovereign_free_master(self.master_brain)
+            self.lib.swarm_free_master(self.master_brain)
 
 # Global Engine Instance
-engine = SovereignAPI()
+engine = SwarmEngineAPI()
 
 # --- SWARM HEARTBEAT STATE ---
 swarm_active = False
@@ -193,14 +193,14 @@ def swarm_logic_loop():
             with swarm_lock:
                 # 1. Agent Generates Action (Thinking)
                 # Scaled for 3.2M model context: temp 0.7 for creativity
-                raw_res = engine.lib.sovereign_agent_act(speaker_ptr, 40, 0.7)
+                raw_res = engine.lib.swarm_agent_act(speaker_ptr, 40, 0.7)
                 text = raw_res.decode('utf-8', errors='ignore') if raw_res else "... [Neural Silence] ..."
                 
                 # 2. Broadcast to ALL other agents (Cross-Observation)
                 broadcast_msg = f"[{speaker_name}]: {text}"
                 for name, ptr in engine.agents.items():
                     if name != speaker_name:
-                        engine.lib.sovereign_agent_observe(ptr, broadcast_msg.encode('utf-8'))
+                        engine.lib.swarm_agent_observe(ptr, broadcast_msg.encode('utf-8'))
             
             # Create heartbeat pulse
             pulse = {
@@ -257,7 +257,7 @@ async def observe(req: ObserveRequest):
     try:
         with swarm_lock:
             agent_ptr = engine.agents[req.agent_id]
-            engine.lib.sovereign_agent_observe(agent_ptr, req.text.encode('utf-8'))
+            engine.lib.swarm_agent_observe(agent_ptr, req.text.encode('utf-8'))
         return {"status": "ok"}
     except:
         return {"error": "Observation crash"}
@@ -271,7 +271,7 @@ async def act(req: ActRequest):
         with swarm_lock:
             agent_ptr = engine.agents[req.agent_id]
             # Call into C++
-            raw_res = engine.lib.sovereign_agent_act(agent_ptr, req.max_chars, req.temp)
+            raw_res = engine.lib.swarm_agent_act(agent_ptr, req.max_chars, req.temp)
         
         # Decode with safety
         if raw_res:
@@ -371,10 +371,10 @@ async def generate_swarm_report(session_id: str):
                     highlights.append(f"**AGENT-{agent}**: \"{content[:150]}...\"")
                     
         # Generate Markdown
-        md = f"""# Sovereign Swarm Analytical Report
+        md = f"""# Swarm-Engine Analytical Report
 
 ## 1. Executive Summary
-The Sovereign C++ engine successfully maintained an autonomous multi-agent simulation to resolve the initial prompt.
+The Swarm-Engine C++ core successfully maintained an autonomous multi-agent simulation to resolve the initial prompt.
 
 **Seed Reality:** *"{seed_text}"*
 
@@ -400,7 +400,7 @@ The Sovereign C++ engine successfully maintained an autonomous multi-agent simul
         for h in highlights:
             md += f"- {h}\n"
             
-        md += "\n> *Report automatically generated by Sovereign Analytical Engine.*"
+        md += "\n> *Report automatically generated by Swarm-Engine.*"
         
         return {
             "session_id": session_id,

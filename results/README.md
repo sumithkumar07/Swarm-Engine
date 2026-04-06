@@ -1,9 +1,9 @@
-# 📊 Sovereign Swarm Performance Benchmarks
+# 📊 swarm Swarm Performance Benchmarks
 
-This report provides high-fidelity performance metrics for the **1.5M Parameter Titan Core** running on consumer-grade hardware.
+This report provides high-fidelity performance metrics for the **1.5M Parameter swarm Core** running on consumer-grade hardware.
 
 ## 🚀 Execution Profile
-The Sovereign Engine is optimized for low-latency, high-concurrency swarm intelligence. By utilizing native CUDA kernels and shared VRAM manifolds, it achieves extreme throughput on local silicon.
+The swarm Engine is optimized for low-latency, high-concurrency swarm intelligence. By utilizing native CUDA kernels and shared VRAM manifolds, it achieves extreme throughput on local silicon.
 
 
 ### 1. Throughput (Tokens Per Second)

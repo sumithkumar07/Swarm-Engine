@@ -1,6 +1,6 @@
-# Sovereign Core: Engine Specifications
+# Swarm-Engine Core: Engine Specifications
 
-The Sovereign Engine (V1.51) is a **High-Performance Recurrent Core** built using a unified C++64/CUDA kernel. It is optimized for sub-millisecond local inference and autonomous backpropagation.
+The Swarm-Engine (V1.51) is a **High-Performance Recurrent Core** built using a unified C++64/CUDA kernel. It is optimized for sub-millisecond local inference and autonomous backpropagation.
 
 ## 🔢 Parameter Architecture
 
@@ -14,7 +14,7 @@ The Sovereign Engine (V1.51) is a **High-Performance Recurrent Core** built usin
 
 ## 📐 Clifford Initialization Logic
 
-Unlike standard Gaussian initialization which leads to gradient dispersion in small local models, Sovereign uses the **Clifford Initializer.** This ensures that the weights are initialized as elements within a high-order geometric algebra.
+Unlike standard Gaussian initialization which leads to gradient dispersion in small local models, swarm uses the **Clifford Initializer.** This ensures that the weights are initialized as elements within a high-order geometric algebra.
 
 - **Non-Convex Stability**: By respecting geometric sign rules, the model maintains stable gradient flow even during high-velocity learning.
 - **Weight Alignment**: Ensuring that $W_i W_j = -W_j W_i$ for specific orthogonal subspaces, preventing "parameter collapse" in the 1.5M core.
@@ -26,7 +26,7 @@ Unlike standard Gaussian initialization which leads to gradient dispersion in sm
 The core engine is located in `engine/`. It executes directly on the GPU/CPU threads without the overhead of the Python Global Interpreter Lock (GIL).
 
 ### 1. Hardware-Aware Memory Management
-Sovereign allocates 64-bit contiguous buffers for the swarm state, reducing L3 cache misses during multi-agent synchronization.
+The Engine allocates 64-bit contiguous buffers for the swarm state, reducing L3 cache misses during multi-agent synchronization.
 
 ### 2. High-Velocity Backpropagation
 The engine implements localized gradient descent within each agent node, allowing for autonomous node-to-node learning without a central supervisor.

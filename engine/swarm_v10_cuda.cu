@@ -11,7 +11,7 @@
 #include <ctime>
 #include "tokenizer.h"
 
-// --- DIMENSIONS & SCALING (TITAN V10) ---
+// --- DIMENSIONS & SCALING (swarm V10) ---
 static const int VOCAB = 5000;
 static const int EMBED_DIM = 64; 
 static const int H_DIM = 256;
@@ -38,12 +38,12 @@ __global__ void init_weights(float* w, int size, unsigned int seed) {
     }
 }
 
-// --- SOVEREIGN GPU ENGINE ---
-class TitanGPU {
+// --- swarm GPU ENGINE ---
+class swarmGPU {
 public:
     float *Wz, *bz, *Wr, *br, *Wh, *bh, *w1, *b1, *Wo, *Whw, *bo, *W_embed;
 
-    TitanGPU() {
+    swarmGPU() {
         CUDA_CHECK(cudaMalloc(&Wz, H_DIM*GRU_CONCAT*4)); CUDA_CHECK(cudaMalloc(&bz, H_DIM*4));
         CUDA_CHECK(cudaMalloc(&Wr, H_DIM*GRU_CONCAT*4)); CUDA_CHECK(cudaMalloc(&br, H_DIM*4));
         CUDA_CHECK(cudaMalloc(&Wh, H_DIM*GRU_CONCAT*4)); CUDA_CHECK(cudaMalloc(&bh, H_DIM*4));
@@ -94,8 +94,8 @@ public:
 };
 
 int main() {
-    std::cout << "Sovereign Titan V10 GPU Trainer (Real Serialization Enabled)\n";
-    TitanGPU engine;
+    std::cout << "swarm swarm V10 GPU Trainer (Real Serialization Enabled)\n";
+    swarmGPU engine;
     
     std::cout << "[EPOCH 1] Training at 13.1 TFLOPS via CUDA Cores...\n";
     // actual training loop step would be here.

@@ -10,7 +10,7 @@
 // --- DIMENSIONS ---
 static const int VOCAB = 256;
 static const int EMBED_DIM = 32; 
-static const int H_DIM = 256; // Titan-scale
+static const int H_DIM = 256; // swarm-scale
 static const int GRU_CONCAT = EMBED_DIM + H_DIM;
 static const int HIDDEN = 512;
 static const int FFN_IN = EMBED_DIM + H_DIM;
@@ -80,8 +80,8 @@ __global__ void output_proj_kernel(
     }
 }
 
-// --- SOVEREIGN TITAN ENGINE MANAGER ---
-struct SovereignTitanSwarm {
+// --- swarm swarm ENGINE MANAGER ---
+struct swarmswarmSwarm {
     // Shared Master Weights Matrix
     float *d_W_z, *d_b_z, *d_W_r, *d_b_r, *d_W_h, *d_b_h;
     float *d_w1, *d_b1, *d_W_out, *d_W_out_highway, *d_b_out;
@@ -94,8 +94,8 @@ struct SovereignTitanSwarm {
     float *d_concat_zh, *d_concat_rh, *d_ff_in;
     float *d_z, *d_r, *d_rh, *d_a1, *d_logits;
 
-    SovereignTitanSwarm() {
-        std::cout << "[TITAN] Allocating GPU Memory for " << NUM_AGENTS << " agents...\n";
+    swarmswarmSwarm() {
+        std::cout << "[swarm] Allocating GPU Memory for " << NUM_AGENTS << " agents...\n";
         
         cudaMalloc(&d_W_z, H_DIM * GRU_CONCAT * sizeof(float)); cudaMalloc(&d_b_z, H_DIM * sizeof(float));
         cudaMalloc(&d_W_r, H_DIM * GRU_CONCAT * sizeof(float)); cudaMalloc(&d_b_r, H_DIM * sizeof(float));
@@ -118,7 +118,7 @@ struct SovereignTitanSwarm {
         cudaMalloc(&d_a1, HIDDEN * sizeof(float)); 
         cudaMalloc(&d_logits, VOCAB * sizeof(float));
 
-        std::cout << "[TITAN] Swarm Infrastructure Ready.\n";
+        std::cout << "[swarm] Swarm Infrastructure Ready.\n";
     }
 
     void load_weights(const std::vector<float>& host_data, float* device_ptr, int count) {
@@ -222,8 +222,8 @@ std::vector<float> generate_fake_trained_weights(int size) {
 }
 
 int main() {
-    std::cout << "=== STAGE 4: SOVEREIGN TITAN SWARM ===\n";
-    SovereignTitanSwarm swarm;
+    std::cout << "=== STAGE 4: swarm swarm SWARM ===\n";
+    swarmswarmSwarm swarm;
 
     // --- WEIGHT INJECTION ---
     std::cout << "[SYSTEM] Initializing Market Intelligence [1.5M Param Path]...\n";
@@ -237,7 +237,7 @@ int main() {
 
     // --- AGENT PROFILING ---
     std::cout << "[SYSTEM] Individuating Autonomous Units...\n";
-    std::vector<std::string> names = {"Titan_Alpha", "Titan_Beta", "Titan_Gamma", "Titan_Delta"};
+    std::vector<std::string> names = {"swarm_Alpha", "swarm_Beta", "swarm_Gamma", "swarm_Delta"};
     std::vector<std::string> prompts = {"Aggressive Bull Trader", "Systemic Algorithmic Defensive", "Social Arbitrage Expert", "Chaos Market Actor"};
     
     std::mt19937 sim_gen(2026);
@@ -266,6 +266,6 @@ int main() {
     }
     
     std::cout << "\n------------------------------------------------------------\n";
-    std::cout << "[SUCCESS] Sovereign Titan Swarm offline.\n";
+    std::cout << "[SUCCESS] swarm swarm Swarm offline.\n";
     return 0;
 }

@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <random>
 #include <string>
+#include <fstream>
+#include <streambuf>
 
 // --- SYSTEM UTILS ---
 double relu(double x) { return x > 0 ? x : 0; }
@@ -31,28 +33,39 @@ static const int GRU_CONCAT = GRU_IN + H_DIM; // 72
 static const int FFN_IN = EMBED_DIM + H_DIM; // 72
 static const int HIDDEN = 64;
 
-// --- CACHE & BLOCK FROM PHASE 5.5 ---
-struct SovereignCache {
+// --- CACHE ---
+struct swarmCache {
     int input_char; // the character integer
     double gru_in[EMBED_DIM];
+    // GRU parts
     double concat_zh[GRU_CONCAT];
     double pre_z[H_DIM], z[H_DIM];
     double pre_r[H_DIM], r[H_DIM];
     double rh[H_DIM], concat_rh[GRU_CONCAT];
     double pre_hc[H_DIM], h_cand[H_DIM];
     double h_prev[H_DIM], h_new[H_DIM];
+    // FFN
     double ff_in[FFN_IN], z1[HIDDEN], a1[HIDDEN];
+    // Output
     double logits[VOCAB], probs[VOCAB];
 };
 
-struct SovereignBlock {
+struct swarmBlock {
+    // Embedding
     double W_embed[VOCAB][EMBED_DIM];
+    
+    // GRU
     double W_z[H_DIM][GRU_CONCAT], b_z[H_DIM];
     double W_r[H_DIM][GRU_CONCAT], b_r[H_DIM];
     double W_h[H_DIM][GRU_CONCAT], b_h[H_DIM];
+    
+    // FFN
     double w1[HIDDEN][FFN_IN], b1[HIDDEN];
+    
+    // Output Projection
     double W_out[VOCAB][HIDDEN], W_out_highway[VOCAB][H_DIM], b_out[VOCAB];
 
+    // Gradients
     double grad_W_embed[VOCAB][EMBED_DIM];
     double grad_W_z[H_DIM][GRU_CONCAT], grad_b_z[H_DIM];
     double grad_W_r[H_DIM][GRU_CONCAT], grad_b_r[H_DIM];
@@ -60,15 +73,17 @@ struct SovereignBlock {
     double grad_w1[HIDDEN][FFN_IN], grad_b1[HIDDEN];
     double grad_W_out[VOCAB][HIDDEN], grad_W_out_highway[VOCAB][H_DIM], grad_b_out[VOCAB];
 
-    SovereignBlock() {
+    swarmBlock() {
         std::mt19937 gen(42);
         std::uniform_real_distribution<double> dis(-0.05, 0.05);
+
         for(int v=0; v<VOCAB; v++) {
             b_out[v] = 0;
             for(int i=0; i<EMBED_DIM; i++) W_embed[v][i] = dis(gen);
             for(int i=0; i<HIDDEN; i++) W_out[v][i] = dis(gen);
             for(int i=0; i<H_DIM; i++) W_out_highway[v][i] = dis(gen);
         }
+
         for(int i=0; i<H_DIM; i++) {
             b_z[i]=-2.0; b_r[i]=0; b_h[i]=0;
             for(int j=0; j<GRU_CONCAT; j++) { W_z[i][j]=dis(gen); W_r[i][j]=dis(gen); W_h[i][j]=dis(gen); }
@@ -94,13 +109,18 @@ struct SovereignBlock {
         for(int i=0; i<HIDDEN; i++) { grad_b1[i]=0; for(int j=0; j<FFN_IN; j++) grad_w1[i][j]=0; }
     }
 
-    SovereignCache forward(int x, double* h_state) {
-        SovereignCache c; c.input_char = x;
+    swarmCache forward(int x, double* h_state) {
+        swarmCache c;
+        c.input_char = x;
+        // 1. Embed
         for(int d=0; d<EMBED_DIM; d++) c.gru_in[d] = W_embed[x][d];
         for(int i=0; i<H_DIM; i++) c.h_prev[i] = h_state[i];
+
+        // Concat zh
         for(int j=0; j<EMBED_DIM; j++) c.concat_zh[j] = c.gru_in[j];
         for(int j=0; j<H_DIM; j++) c.concat_zh[EMBED_DIM+j] = c.h_prev[j];
 
+        // GRU 
         for(int i=0; i<H_DIM; i++) {
             c.pre_z[i]=b_z[i]; for(int j=0; j<GRU_CONCAT; j++) c.pre_z[i]+=W_z[i][j]*c.concat_zh[j];
             c.z[i]=sigmoid(c.pre_z[i]);
@@ -109,6 +129,7 @@ struct SovereignBlock {
             c.rh[i]=c.r[i]*c.h_prev[i];
         }
 
+        // Concat rh
         for(int j=0; j<EMBED_DIM; j++) c.concat_rh[j] = c.gru_in[j];
         for(int j=0; j<H_DIM; j++) c.concat_rh[EMBED_DIM+j] = c.rh[j];
         
@@ -119,6 +140,7 @@ struct SovereignBlock {
             h_state[i]=c.h_new[i];
         }
 
+        // 2. FFN
         for(int j=0; j<EMBED_DIM; j++) c.ff_in[j] = c.gru_in[j];
         for(int j=0; j<H_DIM; j++) c.ff_in[EMBED_DIM+j] = c.h_new[j];
 
@@ -126,16 +148,20 @@ struct SovereignBlock {
             c.z1[i]=b1[i]; for(int j=0; j<FFN_IN; j++) c.z1[i]+=c.ff_in[j]*w1[i][j];
             c.a1[i]=relu(c.z1[i]);
         }
+
+        // 3. Logits and Softmax
         for(int v=0; v<VOCAB; v++) {
             c.logits[v] = b_out[v];
             for(int i=0; i<HIDDEN; i++) c.logits[v] += c.a1[i] * W_out[v][i];
             for(int i=0; i<H_DIM; i++) c.logits[v] += c.h_new[i] * W_out_highway[v][i];
         }
         softmax(c.logits, c.probs, VOCAB);
+
         return c;
     }
 
-    void backward(const SovereignCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
+    void backward(const swarmCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
+        // --- Output Layer Backward ---
         double dL_dlogits[VOCAB];
         for(int v=0; v<VOCAB; v++) {
             dL_dlogits[v] = -c.probs[v];
@@ -149,21 +175,35 @@ struct SovereignBlock {
         for(int v=0; v<VOCAB; v++) {
             double dl = dL_dlogits[v];
             grad_b_out[v] += dl;
-            for(int i=0; i<HIDDEN; i++) { grad_W_out[v][i] += dl * c.a1[i]; dL_da1[i] += dl * W_out[v][i]; }
-            for(int i=0; i<H_DIM; i++) { grad_W_out_highway[v][i] += dl * c.h_new[i]; dL_dh_new[i] += dl * W_out_highway[v][i]; }
+            for(int i=0; i<HIDDEN; i++) {
+                grad_W_out[v][i] += dl * c.a1[i];
+                dL_da1[i] += dl * W_out[v][i];
+            }
+            for(int i=0; i<H_DIM; i++) {
+                grad_W_out_highway[v][i] += dl * c.h_new[i];
+                dL_dh_new[i] += dl * W_out_highway[v][i];
+            }
         }
 
+        // --- FFN Backward ---
         double dL_dff_in[FFN_IN]; for(int j=0; j<FFN_IN; j++) dL_dff_in[j]=0;
         for(int i=0; i<HIDDEN; i++) {
             double dz = dL_da1[i] * relu_derivative(c.z1[i]);
             grad_b1[i] += dz;
-            for(int j=0; j<FFN_IN; j++) { grad_w1[i][j] += dz * c.ff_in[j]; dL_dff_in[j] += dz * w1[i][j]; }
+            for(int j=0; j<FFN_IN; j++) {
+                grad_w1[i][j] += dz * c.ff_in[j];
+                dL_dff_in[j] += dz * w1[i][j];
+            }
         }
 
+        // Add FFN dependence on h_new back to dL_dh_new
         for(int i=0; i<H_DIM; i++) dL_dh_new[i] += dL_dff_in[EMBED_DIM + i];
+        
+        // --- Embed dependence from FFN ---
         double dL_dembed[EMBED_DIM];
         for(int d=0; d<EMBED_DIM; d++) dL_dembed[d] = dL_dff_in[d];
 
+        // --- GRU Backward ---
         double dL_dz[H_DIM], dL_dh_cand[H_DIM], dL_dh_prev[H_DIM];
         for(int i=0; i<H_DIM; i++) {
             dL_dz[i] = dL_dh_new[i] * (c.h_cand[i] - c.h_prev[i]);
@@ -185,7 +225,8 @@ struct SovereignBlock {
 
         double dL_drh[H_DIM];
         for(int i=0; i<H_DIM; i++) {
-            dL_drh[i]=0; for(int ii=0; ii<H_DIM; ii++) dL_drh[i] += dL_dpre_hc[ii]*W_h[ii][EMBED_DIM+i];
+            dL_drh[i]=0;
+            for(int ii=0; ii<H_DIM; ii++) dL_drh[i] += dL_dpre_hc[ii]*W_h[ii][EMBED_DIM+i];
         }
         double dL_dr[H_DIM];
         for(int i=0; i<H_DIM; i++) {
@@ -217,26 +258,33 @@ struct SovereignBlock {
         for(int i=0; i<H_DIM; i++)
             for(int ii=0; ii<H_DIM; ii++) dL_dh_prev[i] += dL_dpre_r[ii]*W_r[ii][EMBED_DIM+i];
 
-        for(int d=0; d<EMBED_DIM; d++) { grad_W_embed[c.input_char][d] += dL_dembed[d]; }
+        for(int d=0; d<EMBED_DIM; d++) {
+            grad_W_embed[c.input_char][d] += dL_dembed[d];
+        }
+
         if(dL_dh_prev_out) for(int i=0; i<H_DIM; i++) dL_dh_prev_out[i] = dL_dh_prev[i];
     }
 
     void clip(double thresh) {
         double ns = 0;
-        for(int v=0;v<VOCAB;v++) { ns+=grad_b_out[v]*grad_b_out[v];
+        for(int v=0;v<VOCAB;v++) {
+            ns+=grad_b_out[v]*grad_b_out[v];
             for(int i=0;i<HIDDEN;i++) ns+=grad_W_out[v][i]*grad_W_out[v][i];
             for(int i=0;i<H_DIM;i++) ns+=grad_W_out_highway[v][i]*grad_W_out_highway[v][i];
-            for(int i=0;i<EMBED_DIM;i++) ns+=grad_W_embed[v][i]*grad_W_embed[v][i]; }
+            for(int i=0;i<EMBED_DIM;i++) ns+=grad_W_embed[v][i]*grad_W_embed[v][i];
+        }
         for(int i=0;i<H_DIM;i++) { ns+=grad_b_z[i]*grad_b_z[i]+grad_b_r[i]*grad_b_r[i]+grad_b_h[i]*grad_b_h[i];
             for(int j=0;j<GRU_CONCAT;j++) ns+=grad_W_z[i][j]*grad_W_z[i][j]+grad_W_r[i][j]*grad_W_r[i][j]+grad_W_h[i][j]*grad_W_h[i][j]; }
         for(int i=0;i<HIDDEN;i++) { ns+=grad_b1[i]*grad_b1[i]; for(int j=0;j<FFN_IN;j++) ns+=grad_w1[i][j]*grad_w1[i][j]; }
         
         double n=std::sqrt(ns); if(n>thresh) {
             double s=thresh/n; 
-            for(int v=0;v<VOCAB;v++) { grad_b_out[v]*=s;
+            for(int v=0;v<VOCAB;v++) {
+                grad_b_out[v]*=s;
                 for(int i=0;i<HIDDEN;i++) grad_W_out[v][i]*=s;
                 for(int i=0;i<H_DIM;i++) grad_W_out_highway[v][i]*=s;
-                for(int i=0;i<EMBED_DIM;i++) grad_W_embed[v][i]*=s; }
+                for(int i=0;i<EMBED_DIM;i++) grad_W_embed[v][i]*=s;
+            }
             for(int i=0;i<H_DIM;i++) { grad_b_z[i]*=s; grad_b_r[i]*=s; grad_b_h[i]*=s; 
                 for(int j=0;j<GRU_CONCAT;j++) { grad_W_z[i][j]*=s; grad_W_r[i][j]*=s; grad_W_h[i][j]*=s; } }
             for(int i=0;i<HIDDEN;i++) { grad_b1[i]*=s; for(int j=0;j<FFN_IN;j++) grad_w1[i][j]*=s; }
@@ -248,78 +296,81 @@ struct SovereignBlock {
             b_out[v]+=lr*grad_b_out[v];
             for(int i=0;i<HIDDEN;i++) W_out[v][i]+=lr*grad_W_out[v][i];
             for(int i=0;i<H_DIM;i++) W_out_highway[v][i]+=lr*grad_W_out_highway[v][i];
-            for(int i=0;i<EMBED_DIM;i++) W_embed[v][i]+=lr*grad_W_embed[v][i]; }
+            for(int i=0;i<EMBED_DIM;i++) W_embed[v][i]+=lr*grad_W_embed[v][i];
+        }
         for(int i=0;i<H_DIM;i++) { b_z[i]+=lr*grad_b_z[i]; b_r[i]+=lr*grad_b_r[i]; b_h[i]+=lr*grad_b_h[i]; 
             for(int j=0;j<GRU_CONCAT;j++) { W_z[i][j]+=lr*grad_W_z[i][j]; W_r[i][j]+=lr*grad_W_r[i][j]; W_h[i][j]+=lr*grad_W_h[i][j]; } }
         for(int i=0;i<HIDDEN;i++) { b1[i]+=lr*grad_b1[i]; for(int j=0;j<FFN_IN;j++) w1[i][j]+=lr*grad_w1[i][j]; }
         zero_gradients();
     }
+
+    int count_params() {
+        return VOCAB*EMBED_DIM + VOCAB*HIDDEN + VOCAB*H_DIM + VOCAB +
+               H_DIM*GRU_CONCAT*3 + H_DIM*3 + 
+               HIDDEN*FFN_IN + HIDDEN;
+    }
 };
 
-// --- DATASET GENERATOR ---
-std::vector<int> generate_synthetic_schema(int num_characters) {
-    std::string data = "";
-    std::vector<std::string> actions = {
-        "[ACTION: POST] This is mathematically sound.",
-        "[ACTION: POST] I disagree with this sequence.",
-        "[ACTION: REPLY] That makes perfect sense.",
-        "[ACTION: DO_NOTHING]",
-        "[ACTION: POST] Fascinating observation.",
-        "[ACTION: REPLY] Let us observe the next event."
-    };
-    std::mt19937 gen(1337);
-    while(data.size() < num_characters) {
-        data += "[EVENT: User Input Detected]\n";
-        data += "[RESPONSE]\n";
-        data += actions[gen() % actions.size()] + "\n";
-    }
-    std::vector<int> out;
-    // clip correctly
-    for(int i=0; i<num_characters; i++) out.push_back((unsigned char)data[i]);
-    return out;
-}
-
 int main() {
-    SovereignBlock b;
+    swarmBlock b;
     std::mt19937 b_gen(42); 
-    std::cout << "--- STAGE 3: PHASE 8 SCHEMA TUNER ---\n";
-    std::cout << "[INFO] Generating Synthetic Action Schema Dataset...\n";
+    std::cout << "--- swarm v5.5 (TBPTT REAL TEXT) ---\n";
+    std::cout << "Parameters: " << b.count_params() << "\n";
 
-    int DATASET_SIZE = 12000;
-    std::vector<int> dataset = generate_synthetic_schema(DATASET_SIZE);
-    std::cout << "[INFO] Dataset generated. Size: " << dataset.size() << " chars\n";
+    // Load dataset
+    std::ifstream file("tiny_shakespeare.txt");
+    if(!file.is_open()) {
+        std::cerr << "Failed to open dataset.\n";
+        return 1;
+    }
+    std::string full_text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    file.close();
 
-    int SEQ_LEN = 32; 
-    double lr = 0.005; 
-    int EPOCHS = 40; 
-    double h_state[H_DIM]; 
+    // Use a tiny 10,000 char subset for demonstration
+    int DATASET_SIZE = 10000;
+    if(full_text.size() < DATASET_SIZE) DATASET_SIZE = full_text.size();
+    
+    std::vector<int> dataset;
+    for(int i=0; i<DATASET_SIZE; i++) dataset.push_back((unsigned char)full_text[i]);
 
-    for(int epoch = 0; epoch <= EPOCHS; epoch++) {
+    int SEQ_LEN = 64; 
+    double lr = 0.002;  // Lower LR for larger state
+    int EPOCHS = 101; 
+
+
+    for(int epoch = 0; epoch < EPOCHS; epoch++) {
         double epoch_loss = 0;
         int num_chunks = 0;
 
-        for(int i=0;i<H_DIM;i++) h_state[i]=0; // Reset persistent state explicitly per epoch for pure overfitting
+        // Persistent Hidden State across the entire dataset!
+        double h_state[H_DIM]; 
+        for(int i=0;i<H_DIM;i++) h_state[i]=0;
 
         for(int i=0; i < DATASET_SIZE - SEQ_LEN; i += SEQ_LEN) {
-            std::vector<SovereignCache> batch;
-            // Forward pass
+            std::vector<swarmCache> batch;
+            
+            // Forward pass for chunk
             for(int t=0; t<SEQ_LEN; t++) {
-                SovereignCache c = b.forward(dataset[i+t], h_state);
+                swarmCache c = b.forward(dataset[i+t], h_state);
                 batch.push_back(c);
             }
-            // Backward pass (TBPTT)
+
+            // Backward pass for chunk (TBPTT)
             double dL_dh[H_DIM]; for(int j=0;j<H_DIM;j++) dL_dh[j]=0;
             b.zero_gradients();
+
             double chunk_loss = 0;
             for(int t=SEQ_LEN-1; t>=0; t--) {
-                int target = dataset[i+t+1]; 
+                int target = dataset[i+t+1]; // predicting next char
                 double prob = batch[t].probs[target];
                 if(prob < 1e-10) prob = 1e-10;
                 chunk_loss += -std::log(prob);
+
                 double dL_dh_prev[H_DIM];
                 b.backward(batch[t], target, dL_dh, dL_dh_prev);
                 for(int j=0; j<H_DIM; j++) dL_dh[j] = dL_dh_prev[j];
             }
+
             b.clip(5.0);
             b.update(lr);
 
@@ -328,49 +379,41 @@ int main() {
         }
 
         double avg_loss = epoch_loss / (num_chunks * SEQ_LEN);
+        double bpc = avg_loss / std::log(2.0);
 
-        if(epoch % 5 == 0 || epoch == EPOCHS) {
-            std::cout << "Epoch " << std::setw(3) << epoch << " | Loss: " << std::fixed << std::setprecision(4) << avg_loss << "\n";
+        if(epoch % 5 == 0 || epoch == EPOCHS - 1) {
+            std::cout << "Epoch " << std::setw(3) << epoch << " | Loss: " << std::fixed << std::setprecision(4) << avg_loss 
+                      << " | BPC: " << bpc << " | PPL: " << std::exp(avg_loss) << "\n";
             
-            if (epoch > 0 && epoch % 10 == 0) {
-                std::cout << "\n[TESTING GENERATION]\n";
-                std::string prompt = "[EVENT: User Input Detected]\n[RESPONSE]\n";
-                std::cout << "PROMPT: " << prompt;
+            std::cout << "\n--- GENERATION ---\n";
+            // Start seed with 'F' (common in tiny shakespeare, e.g. 'First Citizen:')
+            int curr = 'F'; 
+            std::cout << (char)curr;
+            double h_gen[H_DIM]; for(int j=0;j<H_DIM;j++) h_gen[j]=0;
+            std::uniform_real_distribution<double> dist_samp(0.0, 1.0);
+            for(int step=0; step<200; step++) {
+                swarmCache c = b.forward(curr, h_gen);
                 
-                // Warm up schema memory
-                double h_gen[H_DIM]; for(int j=0;j<H_DIM;j++) h_gen[j]=0;
-                for(size_t p=0; p<prompt.size()-1; p++) {
-                    b.forward(prompt[p], h_gen);
+                // Temperature sampling (temp = 0.8)
+                double sum = 0;
+                double scaled_probs[VOCAB];
+                for(int v=0; v<VOCAB; v++) {
+                    scaled_probs[v] = std::pow(c.probs[v], 1.0/0.8);
+                    sum += scaled_probs[v];
                 }
-                
-                int curr = prompt.back();
-                std::uniform_real_distribution<double> dist_samp(0.0, 1.0);
-                std::cout << "AGENT: ";
-                for(int step=0; step<50; step++) {
-                    SovereignCache c = b.forward(curr, h_gen);
-                    
-                    double sum = 0; double scaled_probs[VOCAB];
-                    for(int v=0; v<VOCAB; v++) {
-                        scaled_probs[v] = std::pow(c.probs[v], 1.0/0.4); // Very strict temperature for schemas
-                        sum += scaled_probs[v];
-                    }
-                    double r = dist_samp(b_gen);
-                    double acc = 0.0; int best = 0;
-                    for(int v=0; v<VOCAB; v++) {
-                        acc += scaled_probs[v] / sum;
-                        if(r <= acc) { best = v; break; }
-                    }
+                double r = dist_samp(b_gen); // wait, gen isn't available here. I'll instantiate one.
+                double acc = 0.0;
+                int best = 0;
+                for(int v=0; v<VOCAB; v++) {
+                    acc += scaled_probs[v] / sum;
+                    if(r <= acc) { best = v; break; }
+                }
 
-                    if (best < 32 && best != '\n') best = '.';
-                    std::cout << (char)best;
-                    curr = best;
-                    if (best == '\n') break; // stop naturally on schema line end
-                }
-                std::cout << "\n--------------------\n";
+                std::cout << (char)best;
+                curr = best;
             }
+            std::cout << "\n------------------\n\n";
         }
     }
-    
-    std::cout << "\n[INFO] Phase 8 Schema Tuning completed securely.\n";
     return 0;
 }

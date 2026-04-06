@@ -1,4 +1,4 @@
-# SOVEREIGN ENGINE — MASTER ROADMAP
+# swarm ENGINE — MASTER ROADMAP
 ## Goal: The Smallest Intelligent Agent
 > Build the most parameter-efficient reasoning unit possible, then deploy many as a swarm.
 
@@ -64,12 +64,12 @@ These rules override everything else. If we break them, we go back.
 ### Phase 1: Baseline ✅
 - **What**: Single-block FFN with multiplicative attention on a static regression task.
 - **Result**: MSE 0.00006 after 10,000 epochs.
-- **File**: `sovereign_v1.cpp`
+- **File**: `swarm_v1.cpp`
 
 ### Phase 2: Gradient Sincerity ✅
 - **What**: Separate gradient computation from weight updates (fix Jacobian corruption).
 - **Result**: Same MSE as v1, but mathematically correct. No in-place update bugs.
-- **File**: `sovereign_v1_sincere.cpp`
+- **File**: `swarm_v1_sincere.cpp`
 
 ### Phase 3: Active Memory (STM) ✅
 - **What**: Add recurrent memory via a ring buffer (Short-Term Memory).
@@ -81,7 +81,7 @@ These rules override everything else. If we break them, we go back.
   - 3.3b: Truly random stress test → Failed (0.25 MSE — memory too compressed)
   - 3.3c: Rich Memory (4D Wisdom Vectors) → **SUCCESS (1.62e-05 MSE on random sequences)**
   - 3.3d: Gradient inspection → Confirmed Slot-0 dominance for Echo-4
-- **File**: `sovereign_v3_rich.cpp`
+- **File**: `swarm_v3_rich.cpp`
 
 ---
 
@@ -95,7 +95,7 @@ These rules override everything else. If we break them, we go back.
 - **Decision**: Multi-Head Input Attention was ablated (removed) as it became redundant with the GRU gating, saving parameters (Rule 2).
 
 ### Phase 5: Character-Level Language Modeling ✅
-- **What**: Feed actual text (characters) into Sovereign and predict the next character.
+- **What**: Feed actual text (characters) into swarm and predict the next character.
 - **Why**: This is the first REAL intelligence test. Echo tasks prove memory works, but language modeling proves reasoning.
 - **Requirements before starting**:
   - Character embedding layer (ASCII → vector)
@@ -105,14 +105,14 @@ These rules override everything else. If we break them, we go back.
 - **Result**: Successfully achieved 4.65 BPC (Perplexity 25.1) on Tiny Shakespeare using Truncated BPTT (Phase 5.5). The architecture perfectly generates words, spaces, and formatting.
 
 ### Phase 6: The Critical Benchmark ✅ ⚠️ SURVIVED THE KILL SWITCH
-- **What**: Compare Sovereign at N parameters against LSTM at N parameters.
+- **What**: Compare swarm at N parameters against LSTM at N parameters.
 - **Why**: This is the ONLY way to know if the architecture is worth continuing.
 - **How**: 
   - Fixed parameter budget of purely ~46.4K parameters.
-  - Trained Sovereign (46,472) vs LSTM (46,448) concurrently on identical dataset slice.
+  - Trained swarm (46,472) vs LSTM (46,448) concurrently on identical dataset slice.
   - Compared Final BPC after exactly 100 Epochs.
-- **Success Metric**: Sovereign matches or beats LSTM at same param count.
-- **Result**: **SOVEREIGN WON**. Sovereign scored 4.6518 BPC vs the LSTM's 4.6553 BPC. The multiplicative internal architecture holds fundamentally true and extracts slightly denser learning curves.
+- **Success Metric**: swarm matches or beats LSTM at same param count.
+- **Result**: **swarm WON**. swarm scored 4.6518 BPC vs the LSTM's 4.6553 BPC. The multiplicative internal architecture holds fundamentally true and extracts slightly denser learning curves.
 
 > [!NOTE]
 > Phase 6 "Kill Switch" cleared. Architecture proven mathematically sound for STAGE 3 Swarm implementation.
@@ -121,11 +121,11 @@ These rules override everything else. If we break them, we go back.
 > Goal: Turn the tiny intelligent unit into a communicating agent.
 
 ### Phase 7: The Social Sandbox (Infrastructure) ✅
-- **What**: Build `sovereign_v7_sandbox.cpp`, a native C++ simulation environment inspired by MiroFish and OASIS.
-- **Success Metric**: Run 4 independent Sovereign brains looping indefinitely, responding to the timeline with stable gradients/no memory crashes.
+- **What**: Build `swarm_v7_sandbox.cpp`, a native C++ simulation environment inspired by MiroFish and OASIS.
+- **Success Metric**: Run 4 independent swarm brains looping indefinitely, responding to the timeline with stable gradients/no memory crashes.
 
 ### Phase 8: Schema Instruction Tuning ✅
-- **What**: Train the Sovereign brains to stop speaking raw unstructured data (Shakespeare) and start speaking structured logic schemas (e.g., `[ACTION: POST] My thoughts here.`).
+- **What**: Train the swarm brains to stop speaking raw unstructured data (Shakespeare) and start speaking structured logic schemas (e.g., `[ACTION: POST] My thoughts here.`).
 - **Success Metric**: The 46K parameter agent natively outputs formatted action logic in >95% of its responses.
 
 ### Phase 9: Swarm Dynamics & Emergence ✅
@@ -134,17 +134,17 @@ These rules override everything else. If we break them, we go back.
 
 ---
 
-## ✅ STAGE 4: THE TITAN PROTOCOL (Complete)
-> Goal: Port the mathematically proven Sovereign Engine from the CPU to hyper-parallel NVIDIA CUDA cores to scale parameters dramatically.
+## ✅ STAGE 4: THE swarm PROTOCOL (Complete)
+> Goal: Port the mathematically proven swarm Engine from the CPU to hyper-parallel NVIDIA CUDA cores to scale parameters dramatically.
 
 ### Phase 10: Infrastructure Initialization ✅
 - **What**: Write `hello_gpu.cu` to prove the `nvcc` pipeline compiles natively within Windows without MSVC Linker mismatch crashing.
 
 ### Phase 11: V-Scaling The Block ✅
-- **What**: Port the `SovereignBlock` into a VRAM-based execution environment (`sovereign_v10_cuda.cu`).
+- **What**: Port the `swarmBlock` into a VRAM-based execution environment (`swarm_v10_cuda.cu`).
 - **Success Metric**: Achieve >1 Million parameter scaling on the GPU.
 
-### Phase 12: The Autonomous Titan Swarm ✅
+### Phase 12: The Autonomous swarm Swarm ✅
 - **What**: Inject the CUDA-accelerated brains into the Swarm Sandbox.
 - **Success Metric**: Successfully deployed a 1.5M parameter 4-agent swarm on the RTX 3050 GPU.
 
@@ -152,7 +152,7 @@ These rules override everything else. If we break them, we go back.
 
 ---
 
-## 🖥️ STAGE 5: THE SOVEREIGN INFRASTRUCTURE ✅
+## 🖥️ STAGE 5: THE swarm INFRASTRUCTURE ✅
 > Goal: Transition from console-based research to a professional "MiroFish-style" platform.
 
 ### Phase 13: Local Headless API Layer ✅
@@ -160,13 +160,13 @@ These rules override everything else. If we break them, we go back.
 - **Why**: Allows the brain to run as a backend service while the UI interacts via a browser on `localhost`.
 - **Success Metric**: Confirm zero-latency JSON thought-streaming to a local port. [ACHIEVED: PLATFORM LIVE]
 
-### Phase 14: The Sovereign Dashboard (Frontend) ✅
+### Phase 14: The swarm Dashboard (Frontend) ✅
 - **What**: Build a premium React/Next.js dashboard to visualize the Swarm's activities.
 - **Why**: Professional presentation transforms research into a platform.
 - **Success Metric**: A functional, high-tech Dashboard UI deployed to GitHub Pages. [ACHIEVED: DASHBOARD v1.1 LIVE]
 
 ### Phase 15: Professional Documentation & Branding ✅
-- **What**: Create a comprehensive `README.md` and "Sovereign Wiki" explaining the architecture.
+- **What**: Create a comprehensive `README.md` and "swarm Wiki" explaining the architecture.
 - **Success Metric**: A repository that clearly communicates its value to the public. [ACHIEVED: REPO RESTRUCTURE COMPLETE]
 
 ---
@@ -179,7 +179,7 @@ These rules override everything else. If we break them, we go back.
 
 ---
 
-## ☁️ STAGE 7: THE SOVEREIGN CLOUD (Future)
+## ☁️ STAGE 7: THE swarm CLOUD (Future)
 > Goal: Deploy the fully verified local platform to persistent GPU Cloud infrastructure.
 
 # 📓 PROGRESS LOG (The Journey)

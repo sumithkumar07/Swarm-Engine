@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <random>
 #include <string>
-#include <fstream>
-#include <streambuf>
 
 // --- SYSTEM UTILS ---
 double relu(double x) { return x > 0 ? x : 0; }
@@ -28,13 +26,13 @@ void softmax(double* logits, double* probs, int size) {
 static const int VOCAB = 256;
 static const int EMBED_DIM = 8; 
 static const int GRU_IN = EMBED_DIM; 
-static const int H_DIM = 64;
-static const int GRU_CONCAT = GRU_IN + H_DIM; // 72
-static const int FFN_IN = EMBED_DIM + H_DIM; // 72
-static const int HIDDEN = 64;
+static const int H_DIM = 24;
+static const int GRU_CONCAT = GRU_IN + H_DIM; // 32
+static const int FFN_IN = EMBED_DIM + H_DIM; // 32
+static const int HIDDEN = 32;
 
 // --- CACHE ---
-struct SovereignCache {
+struct swarmCache {
     int input_char; // the character integer
     double gru_in[EMBED_DIM];
     // GRU parts
@@ -50,7 +48,7 @@ struct SovereignCache {
     double logits[VOCAB], probs[VOCAB];
 };
 
-struct SovereignBlock {
+struct swarmBlock {
     // Embedding
     double W_embed[VOCAB][EMBED_DIM];
     
@@ -73,7 +71,7 @@ struct SovereignBlock {
     double grad_w1[HIDDEN][FFN_IN], grad_b1[HIDDEN];
     double grad_W_out[VOCAB][HIDDEN], grad_W_out_highway[VOCAB][H_DIM], grad_b_out[VOCAB];
 
-    SovereignBlock() {
+    swarmBlock() {
         std::mt19937 gen(42);
         std::uniform_real_distribution<double> dis(-0.05, 0.05);
 
@@ -109,8 +107,8 @@ struct SovereignBlock {
         for(int i=0; i<HIDDEN; i++) { grad_b1[i]=0; for(int j=0; j<FFN_IN; j++) grad_w1[i][j]=0; }
     }
 
-    SovereignCache forward(int x, double* h_state) {
-        SovereignCache c;
+    swarmCache forward(int x, double* h_state) {
+        swarmCache c;
         c.input_char = x;
         // 1. Embed
         for(int d=0; d<EMBED_DIM; d++) c.gru_in[d] = W_embed[x][d];
@@ -160,7 +158,7 @@ struct SovereignBlock {
         return c;
     }
 
-    void backward(const SovereignCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
+    void backward(const swarmCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
         // --- Output Layer Backward ---
         double dL_dlogits[VOCAB];
         for(int v=0; v<VOCAB; v++) {
@@ -219,6 +217,7 @@ struct SovereignBlock {
             for(int j=0; j<GRU_CONCAT; j++) grad_W_h[i][j] += dL_dpre_hc[i]*c.concat_rh[j];
         }
 
+        // GRU input path from h_cand (concat_rh has embed_dim first)
         for(int j=0; j<EMBED_DIM; j++) {
             for(int i=0; i<H_DIM; i++) dL_dembed[j] += dL_dpre_hc[i] * W_h[i][j];
         }
@@ -258,6 +257,7 @@ struct SovereignBlock {
         for(int i=0; i<H_DIM; i++)
             for(int ii=0; ii<H_DIM; ii++) dL_dh_prev[i] += dL_dpre_r[ii]*W_r[ii][EMBED_DIM+i];
 
+        // --- Accumulate Embed Gradients ---
         for(int d=0; d<EMBED_DIM; d++) {
             grad_W_embed[c.input_char][d] += dL_dembed[d];
         }
@@ -312,108 +312,70 @@ struct SovereignBlock {
 };
 
 int main() {
-    SovereignBlock b;
-    std::mt19937 b_gen(42); 
-    std::cout << "--- SOVEREIGN v5.5 (TBPTT REAL TEXT) ---\n";
-    std::cout << "Parameters: " << b.count_params() << "\n";
-
-    // Load dataset
-    std::ifstream file("tiny_shakespeare.txt");
-    if(!file.is_open()) {
-        std::cerr << "Failed to open dataset.\n";
-        return 1;
-    }
-    std::string full_text((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    file.close();
-
-    // Use a tiny 10,000 char subset for demonstration
-    int DATASET_SIZE = 10000;
-    if(full_text.size() < DATASET_SIZE) DATASET_SIZE = full_text.size();
+    swarmBlock b;
     
-    std::vector<int> dataset;
-    for(int i=0; i<DATASET_SIZE; i++) dataset.push_back((unsigned char)full_text[i]);
+    std::string text = "hello swarm agent ";
+    // Use an array of ints
+    std::vector<int> seq;
+    for(char c : text) seq.push_back((unsigned char)c);
+    
+    std::cout << "--- swarm v5.0 (CHAR-LEVEL LM) ---\n";
+    std::cout << "Parameters: " << b.count_params() << "\n";
+    std::cout << "Training Sequence: '" << text << "' (Length: " << seq.size() << ")\n\n";
 
-    int SEQ_LEN = 64; 
-    double lr = 0.002;  // Lower LR for larger state
-    int EPOCHS = 101; 
+    double lr=0.01;
+    for(int epoch=0; epoch<4001; epoch++) {
+        double total_loss = 0;
+        std::vector<swarmCache> batch;
+        double h_state[H_DIM]; for(int i=0;i<H_DIM;i++) h_state[i]=0;
 
-
-    for(int epoch = 0; epoch < EPOCHS; epoch++) {
-        double epoch_loss = 0;
-        int num_chunks = 0;
-
-        // Persistent Hidden State across the entire dataset!
-        double h_state[H_DIM]; 
-        for(int i=0;i<H_DIM;i++) h_state[i]=0;
-
-        for(int i=0; i < DATASET_SIZE - SEQ_LEN; i += SEQ_LEN) {
-            std::vector<SovereignCache> batch;
-            
-            // Forward pass for chunk
-            for(int t=0; t<SEQ_LEN; t++) {
-                SovereignCache c = b.forward(dataset[i+t], h_state);
-                batch.push_back(c);
-            }
-
-            // Backward pass for chunk (TBPTT)
-            double dL_dh[H_DIM]; for(int j=0;j<H_DIM;j++) dL_dh[j]=0;
-            b.zero_gradients();
-
-            double chunk_loss = 0;
-            for(int t=SEQ_LEN-1; t>=0; t--) {
-                int target = dataset[i+t+1]; // predicting next char
-                double prob = batch[t].probs[target];
-                if(prob < 1e-10) prob = 1e-10;
-                chunk_loss += -std::log(prob);
-
-                double dL_dh_prev[H_DIM];
-                b.backward(batch[t], target, dL_dh, dL_dh_prev);
-                for(int j=0; j<H_DIM; j++) dL_dh[j] = dL_dh_prev[j];
-            }
-
-            b.clip(5.0);
-            b.update(lr);
-
-            epoch_loss += chunk_loss;
-            num_chunks++;
+        // Forward
+        for(int t=0; t<(int)seq.size()-1; t++) {
+            swarmCache c = b.forward(seq[t], h_state);
+            batch.push_back(c);
         }
 
-        double avg_loss = epoch_loss / (num_chunks * SEQ_LEN);
-        double bpc = avg_loss / std::log(2.0);
+        // Backward
+        double dL_dh[H_DIM]; for(int i=0;i<H_DIM;i++) dL_dh[i]=0;
+        b.zero_gradients();
 
-        if(epoch % 5 == 0 || epoch == EPOCHS - 1) {
-            std::cout << "Epoch " << std::setw(3) << epoch << " | Loss: " << std::fixed << std::setprecision(4) << avg_loss 
+        for(int t=(int)batch.size()-1; t>=0; t--) {
+            int target = seq[t+1];
+            double prob = batch[t].probs[target];
+            if(prob < 1e-10) prob = 1e-10;
+            total_loss += -std::log(prob);
+
+            double dL_dh_prev[H_DIM];
+            b.backward(batch[t], target, dL_dh, dL_dh_prev);
+            for(int i=0; i<H_DIM; i++) dL_dh[i] = dL_dh_prev[i];
+        }
+
+        b.clip(10.0); 
+        b.update(lr);
+
+        if(epoch%200==0) {
+            double avg_loss = total_loss / batch.size();
+            double bpc = avg_loss / std::log(2.0);
+            std::cout << "Epoch " << std::setw(5) << epoch << " | Loss: " << std::fixed << std::setprecision(4) << avg_loss 
                       << " | BPC: " << bpc << " | PPL: " << std::exp(avg_loss) << "\n";
             
-            std::cout << "\n--- GENERATION ---\n";
-            // Start seed with 'F' (common in tiny shakespeare, e.g. 'First Citizen:')
-            int curr = 'F'; 
-            std::cout << (char)curr;
-            double h_gen[H_DIM]; for(int j=0;j<H_DIM;j++) h_gen[j]=0;
-            std::uniform_real_distribution<double> dist_samp(0.0, 1.0);
-            for(int step=0; step<200; step++) {
-                SovereignCache c = b.forward(curr, h_gen);
-                
-                // Temperature sampling (temp = 0.8)
-                double sum = 0;
-                double scaled_probs[VOCAB];
-                for(int v=0; v<VOCAB; v++) {
-                    scaled_probs[v] = std::pow(c.probs[v], 1.0/0.8);
-                    sum += scaled_probs[v];
+            // Generate a sample
+            if(epoch%1000==0) {
+                std::cout << "Generated: 'h";
+                double h_gen[H_DIM]; for(int i=0;i<H_DIM;i++) h_gen[i]=0;
+                int curr = 'h';
+                for(int i=0; i<30; i++) {
+                    swarmCache c = b.forward(curr, h_gen);
+                    // argmax
+                    int best = 0;
+                    for(int v=1; v<VOCAB; v++) if(c.probs[v] > c.probs[best]) best = v;
+                    std::cout << (char)best;
+                    curr = best;
                 }
-                double r = dist_samp(b_gen); // wait, gen isn't available here. I'll instantiate one.
-                double acc = 0.0;
-                int best = 0;
-                for(int v=0; v<VOCAB; v++) {
-                    acc += scaled_probs[v] / sum;
-                    if(r <= acc) { best = v; break; }
-                }
-
-                std::cout << (char)best;
-                curr = best;
+                std::cout << "'\n";
             }
-            std::cout << "\n------------------\n\n";
         }
     }
+
     return 0;
 }

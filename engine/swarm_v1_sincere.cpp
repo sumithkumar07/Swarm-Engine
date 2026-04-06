@@ -23,8 +23,8 @@ void softmax3(float* input, float* output) {
     output[0] /= sum; output[1] /= sum; output[2] /= sum;
 }
 
-// --- SOVEREIGN BLOCK v2.4 (SINCERE CORE) ---
-struct SovereignBlock {
+// --- swarm BLOCK v2.4 (SINCERE CORE) ---
+struct swarmBlock {
     static const int HEADS = 3;
 
     // Parameters
@@ -32,7 +32,7 @@ struct SovereignBlock {
     float w1[8][3], b1[8];
     float w_feat[8], b_feat;
 
-    SovereignBlock() {
+    swarmBlock() {
         for (int k = 0; k < HEADS; k++) {
             for (int j = 0; j < 3; j++) {
                 wA[k][j] = ((rand() % 100) / 100.0f) - 0.5f;
@@ -139,7 +139,7 @@ struct SovereignBlock {
 };
 
 int main() {
-    SovereignBlock b1, b2;
+    swarmBlock b1, b2;
     float w_final[3] = {0.1f, 0.1f, 0.5f}, b_final = 0.0f;
     std::vector<DataPoint> data;
     for (float i = -1.0f; i <= 1.0f; i += 0.4f) {
@@ -149,7 +149,7 @@ int main() {
         }
     }
 
-    std::cout << "--- SOVEREIGN v2.4 (SINCERE G-FLOW) ---\n\n";
+    std::cout << "--- swarm v2.4 (SINCERE G-FLOW) ---\n\n";
 
     float lr = 0.015f;
     for (int epoch = 0; epoch < 10001; epoch++) {

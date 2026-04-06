@@ -1,6 +1,6 @@
 # 2-Minute Swarm Experience
 
-Follow this exact sequence to witness the **Sovereign Swarm** in action on your local machine.
+Follow this exact sequence to witness the **Swarm-Engine** in action on your local machine.
 
 ---
 
@@ -10,7 +10,7 @@ Follow this exact sequence to witness the **Sovereign Swarm** in action on your 
 2. Navigate to the `engine/` directory.
 3. Run the optimized build script:
    ```bash
-   ./run_v12_titan.bat
+   ./run_v12_swarm.bat
    ```
 4. **Observe**: The C++ engine will initialize 1,532,472 parameters in **< 5ms**. Look for the `[SUCCESS] Engine Core Ready` log.
 
@@ -38,7 +38,7 @@ Follow this exact sequence to witness the **Sovereign Swarm** in action on your 
 ---
 
 ## 💡 Why This Works
-Unlike standard LLM interfaces that rely on high-latency cloud APIs, Sovereign is **physically local.** You are observing a C++/CUDA swarm running directly on your silicon, achieving zero-latency reasoning through Clifford-initialized manifolds.
+Unlike standard LLM interfaces that rely on high-latency cloud APIs, Swarm-Engine is **physically local.** You are observing a C++/CUDA swarm running directly on your silicon, achieving zero-latency reasoning through Clifford-initialized manifolds.
 
 ---
 

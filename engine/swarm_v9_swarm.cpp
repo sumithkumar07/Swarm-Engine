@@ -32,7 +32,7 @@ static const int FFN_IN = EMBED_DIM + H_DIM;
 static const int HIDDEN = 64;
 
 // --- MASTER BRAIN (MATH) ---
-struct SovereignCache {
+struct swarmCache {
     int input_char; 
     double gru_in[EMBED_DIM];
     double concat_zh[GRU_CONCAT], pre_z[H_DIM], z[H_DIM];
@@ -42,7 +42,7 @@ struct SovereignCache {
     double logits[VOCAB], probs[VOCAB];
 };
 
-struct SovereignBlock {
+struct swarmBlock {
     double W_embed[VOCAB][EMBED_DIM];
     double W_z[H_DIM][GRU_CONCAT], b_z[H_DIM];
     double W_r[H_DIM][GRU_CONCAT], b_r[H_DIM];
@@ -57,7 +57,7 @@ struct SovereignBlock {
     double grad_w1[HIDDEN][FFN_IN], grad_b1[HIDDEN];
     double grad_W_out[VOCAB][HIDDEN], grad_W_out_highway[VOCAB][H_DIM], grad_b_out[VOCAB];
 
-    SovereignBlock() {
+    swarmBlock() {
         std::mt19937 gen(101);
         std::uniform_real_distribution<double> dis(-0.05, 0.05);
         for(int v=0; v<VOCAB; v++) {
@@ -91,8 +91,8 @@ struct SovereignBlock {
         for(int i=0; i<HIDDEN; i++) { grad_b1[i]=0; for(int j=0; j<FFN_IN; j++) grad_w1[i][j]=0; }
     }
 
-    SovereignCache forward(int x, double* h_state) {
-        SovereignCache c; c.input_char = x;
+    swarmCache forward(int x, double* h_state) {
+        swarmCache c; c.input_char = x;
         for(int d=0; d<EMBED_DIM; d++) c.gru_in[d] = W_embed[x][d];
         for(int i=0; i<H_DIM; i++) c.h_prev[i] = h_state[i];
         for(int j=0; j<EMBED_DIM; j++) c.concat_zh[j] = c.gru_in[j];
@@ -132,7 +132,7 @@ struct SovereignBlock {
         return c;
     }
 
-    void backward(const SovereignCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
+    void backward(const swarmCache& c, int target_char, double* dL_dh_inject, double* dL_dh_prev_out) {
         double dL_dlogits[VOCAB];
         for(int v=0; v<VOCAB; v++) {
             dL_dlogits[v] = -c.probs[v];
@@ -255,15 +255,15 @@ struct SovereignBlock {
 
 // --- MULTI-AGENT SWARM ARCHITECTURE ---
 
-class SovereignAgent {
+class swarmAgent {
 public:
     std::string name;
-    SovereignBlock brain;
+    swarmBlock brain;
     double h_state[H_DIM];
     std::mt19937 dist_gen;
 
     // Load natively from Master brain
-    SovereignAgent(std::string name, const SovereignBlock& master, int rseed) 
+    swarmAgent(std::string name, const swarmBlock& master, int rseed) 
         : name(name), brain(master), dist_gen(rseed) {
         for(int i=0; i<H_DIM; i++) h_state[i] = 0;
     }
@@ -280,7 +280,7 @@ public:
         std::uniform_real_distribution<double> dist_samp(0.0, 1.0);
         
         for(int step=0; step<max_chars; step++) {
-            SovereignCache c = brain.forward(curr, h_state);
+            swarmCache c = brain.forward(curr, h_state);
             double sum = 0; double scaled_probs[VOCAB];
             for(int v=0; v<VOCAB; v++) {
                 scaled_probs[v] = std::pow(c.probs[v], 1.0/temperature);
@@ -333,7 +333,7 @@ std::vector<int> generate_market_logic(int num_characters) {
 }
 
 int main() {
-    std::cout << "=== SOVEREIGN V9 SWARM EMERGENCE ===\n";
+    std::cout << "=== swarm V9 SWARM EMERGENCE ===\n";
     
     // -------------------------------------------------------------
     // PHASE 1: THE ACADEMY (PRE-TRAINING THE MASTER BRAIN NATIVELY)
@@ -341,8 +341,8 @@ int main() {
     std::cout << "[SYSTEM] Compiling Synthetic Micro-Market Dataset...\n";
     std::vector<int> dataset = generate_market_logic(4000);
     
-    std::cout << "[SYSTEM] Instantiating Master Sovereign Block...\n";
-    SovereignBlock master;
+    std::cout << "[SYSTEM] Instantiating Master swarm Block...\n";
+    swarmBlock master;
     
     std::cout << "[SYSTEM] Master Brain initiating TBPTT Training Loop...\n";
     int SEQ_LEN = 32; 
@@ -355,9 +355,9 @@ int main() {
         for(int i=0;i<H_DIM;i++) h_state[i]=0; 
 
         for(int i=0; i < dataset.size() - SEQ_LEN; i += SEQ_LEN) {
-            std::vector<SovereignCache> batch;
+            std::vector<swarmCache> batch;
             for(int t=0; t<SEQ_LEN; t++) {
-                SovereignCache c = master.forward(dataset[i+t], h_state);
+                swarmCache c = master.forward(dataset[i+t], h_state);
                 batch.push_back(c);
             }
             double dL_dh[H_DIM]; for(int j=0;j<H_DIM;j++) dL_dh[j]=0;
@@ -387,11 +387,11 @@ int main() {
     // PHASE 2: INDIVIDUATION (CLONING THE SWARM)
     // -------------------------------------------------------------
     std::cout << "[SYSTEM] Cloning Master Brain into 4 separate Agents...\n";
-    std::vector<SovereignAgent*> swarm;
-    swarm.push_back(new SovereignAgent("Alpha_Bull", master, 111));
-    swarm.push_back(new SovereignAgent("Beta_Bear", master, 222));
-    swarm.push_back(new SovereignAgent("Gamma_Algo", master, 333));
-    swarm.push_back(new SovereignAgent("Delta_Algo", master, 444));
+    std::vector<swarmAgent*> swarm;
+    swarm.push_back(new swarmAgent("Alpha_Bull", master, 111));
+    swarm.push_back(new swarmAgent("Beta_Bear", master, 222));
+    swarm.push_back(new swarmAgent("Gamma_Algo", master, 333));
+    swarm.push_back(new swarmAgent("Delta_Algo", master, 444));
     
     // Inject psychological drift
     std::cout << "[SYSTEM] Injecting contextual prompt states...\n";
@@ -435,7 +435,7 @@ int main() {
 
     std::cout << "---------------------------------------------------------\n";
     for(auto a : swarm) delete a;
-    std::cout << "[SUCCESS] Sovereign Swarm Offline Engine completed flawlessly.\n";
+    std::cout << "[SUCCESS] swarm Swarm Offline Engine completed flawlessly.\n";
     return 0;
 }
 
@@ -451,28 +451,28 @@ int main() {
 
 extern "C" {
     // Brain Factory: Create a persistent 1.5M Parameter Master Block
-    EXPORT void* sovereign_init_master() {
-        return (void*)new SovereignBlock();
+    EXPORT void* swarm_init_master() {
+        return (void*)new swarmBlock();
     }
 
     // Agent Factory: Clone from Master into a named personality
-    EXPORT void* sovereign_init_agent(const char* name, void* master_ptr, int seed) {
+    EXPORT void* swarm_init_agent(const char* name, void* master_ptr, int seed) {
         if (!master_ptr) return nullptr;
-        SovereignBlock* master = (SovereignBlock*)master_ptr;
-        return (void*)new SovereignAgent(std::string(name), *master, seed);
+        swarmBlock* master = (swarmBlock*)master_ptr;
+        return (void*)new swarmAgent(std::string(name), *master, seed);
     }
 
     // Input: Feed text into the agent's neural state
-    EXPORT void sovereign_agent_observe(void* agent_ptr, const char* text) {
+    EXPORT void swarm_agent_observe(void* agent_ptr, const char* text) {
         if (!agent_ptr || !text) return;
-        SovereignAgent* agent = (SovereignAgent*)agent_ptr;
+        swarmAgent* agent = (swarmAgent*)agent_ptr;
         agent->observe(std::string(text));
     }
 
     // Output: Sample generated response from the VRAM/RAM state
-    EXPORT const char* sovereign_agent_act(void* agent_ptr, int max_chars, double temp) {
+    EXPORT const char* swarm_agent_act(void* agent_ptr, int max_chars, double temp) {
         if (!agent_ptr) return "";
-        SovereignAgent* agent = (SovereignAgent*)agent_ptr;
+        swarmAgent* agent = (swarmAgent*)agent_ptr;
         
         // Static buffer for result return (thread-safe for single HF space)
         static std::string result;
@@ -481,7 +481,7 @@ extern "C" {
     }
 
     // Cleanup
-    EXPORT void sovereign_free_agent(void* agent_ptr) {
-        if (agent_ptr) delete (SovereignAgent*)agent_ptr;
+    EXPORT void swarm_free_agent(void* agent_ptr) {
+        if (agent_ptr) delete (swarmAgent*)agent_ptr;
     }
 }
