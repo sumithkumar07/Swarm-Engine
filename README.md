@@ -1,4 +1,4 @@
-# | 1.5M Parameter Local Inference Engine
+#  1.5M Parameter Local Inference Engine
 
 <div align="center">
 
