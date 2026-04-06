@@ -15,7 +15,7 @@
 ---
 
 ## 🏛️ The Power of Local Inference
-Sovereign is a high-performance, 1.5M parameter neural core designed for true on-device autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Neural Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
+Swarm is a high-performance, 1.5M parameter neural core designed for true on-device autonomy. Operating entirely on local hardware, it orchestrates a persistent swarm of **4 Neural Agents** (Alpha, Beta, Delta, Gamma) across a 64-bit native memory bridge.
 
 ### Technical Implementation
 Unlike standard transformers, Sovereign leverages a **High-Order Recurrent Core** (Clifford Initialization). Each parameter is initialized via anti-commutative Clifford algebras, ensuring gradient stability and zero-feedback convergence.
@@ -26,7 +26,7 @@ Unlike standard transformers, Sovereign leverages a **High-Order Recurrent Core*
 
 ```mermaid
 graph TD
-    User([Sovereign Workbench]) -->|Command| SwarmHub{Swarm Core Hub}
+    User([Swarm Workbench]) -->|Command| SwarmHub{Swarm Core Hub}
     
     subgraph SC ["Swarm Core"]
         SwarmHub --> Alpha[Agent-Alpha: Lead Reasoning]
